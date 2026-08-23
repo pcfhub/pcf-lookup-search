@@ -71,9 +71,20 @@ let instances = 0;
  * lines of markup. `currentColor` is what makes them follow the host theme, so
  * nothing here states a colour.
  */
+/*
+ * Mirrored, and deliberately so.
+ *
+ * The usual search glyph — Fluent's included — puts the lens at the upper left
+ * with the handle running down to the right. The lookup button in a
+ * model-driven form is the other way round: lens upper right, handle down to
+ * the left. It is a small thing, and it is the kind of small thing that makes a
+ * control look almost right, so the transform below flips the standard path
+ * within its own viewBox rather than shipping a second one.
+ */
 const SearchGlyph = (): React.ReactElement => (
     <svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
         <path
+            transform="translate(20 0) scale(-1 1)"
             d="M8.5 3a5.5 5.5 0 0 1 4.39 8.83l4.14 4.14a.75.75 0 0 1-1.06 1.06l-4.14-4.14A5.5 5.5 0 1 1 8.5 3Zm0 1.5a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z"
             fill="currentColor"
         />
