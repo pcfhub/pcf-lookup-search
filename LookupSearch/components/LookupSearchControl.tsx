@@ -64,22 +64,19 @@ const format = (template: string, value: string): string => template.split('{0}'
 let instances = 0;
 
 /*
- * Inline SVG rather than `@fluentui/react-icons`.
+ * Inline SVG rather than `@fluentui/react-icons`, for all three glyphs below.
  *
- * The icon package is not a platform library, so importing two glyphs from it
- * bundles the package's own runtime alongside them — for shapes that are eight
- * lines of markup. `currentColor` is what makes them follow the host theme, so
- * nothing here states a colour.
- */
-/*
- * Mirrored, and deliberately so.
+ * The icon package is not a platform library, so importing from it bundles the
+ * package's own runtime alongside the shapes — for markup that is eight lines
+ * long. `currentColor` is what makes them follow the host theme, so nothing
+ * here states a colour.
  *
- * The usual search glyph — Fluent's included — puts the lens at the upper left
- * with the handle running down to the right. The lookup button in a
- * model-driven form is the other way round: lens upper right, handle down to
- * the left. It is a small thing, and it is the kind of small thing that makes a
- * control look almost right, so the transform below flips the standard path
- * within its own viewBox rather than shipping a second one.
+ * The magnifier is mirrored, and deliberately so. The usual search glyph —
+ * Fluent's included — puts the lens at the upper left with the handle running
+ * down to the right. The lookup button in a model-driven form is the other way
+ * round: lens upper right, handle down to the left. That is the kind of small
+ * thing that leaves a control looking almost right, so the transform flips the
+ * standard path within its own viewBox rather than shipping a second one.
  */
 const SearchGlyph = (): React.ReactElement => (
     <svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
@@ -128,6 +125,18 @@ export function LookupSearchControl(props: IProps): React.ReactElement | null {
     const input = React.useRef<HTMLInputElement>(null);
     const restoreFocus = React.useRef(false);
     const statusId = React.useRef('');
+
+    /*
+     * The field, held as state rather than a ref because the dropdown has to be
+     * positioned against it and a ref's assignment does not re-render.
+     *
+     * Fluent anchors and sizes the listbox to the Combobox, which here is only
+     * part of the field — the browse button sits beside it. Left alone, the
+     * dropdown comes out exactly one button narrower than the control it
+     * belongs to. A callback ref costs one extra render at mount, long before
+     * anything can open.
+     */
+    const [fieldEl, setFieldEl] = React.useState<HTMLDivElement | null>(null);
 
     if (statusId.current === '') {
         instances += 1;
@@ -205,9 +214,22 @@ export function LookupSearchControl(props: IProps): React.ReactElement | null {
 
         const term = query.trim();
 
+        /*
+         * Every `setOpen` below reads "is there something to show", not "are
+         * there results".
+         *
+         * Since the messages moved into the dropdown, closing it is how they get
+         * hidden — and the message most worth showing is the one that explains
+         * an *empty* result. Gating the popup on `rows.length > 0` left a search
+         * that found nothing looking like a search that never finished, until
+         * the user clicked the field and reopened it.
+         *
+         * The rendered `open` prop is still ANDed with having content, so
+         * setting this true with nothing to say stays closed anyway.
+         */
         if (term.length < props.minimumCharacters) {
             setCandidates([]);
-            setOpen(false);
+            setOpen(term.length > 0);
             setFailure(null);
             setStatus(term.length === 0 ? 'idle' : 'typeMore');
             return;
@@ -216,6 +238,9 @@ export function LookupSearchControl(props: IProps): React.ReactElement | null {
         let live = true;
         setStatus('searching');
         setFailure(null);
+        // Not left to Fluent's own open-on-type: a value pasted straight past
+        // the minimum never passes through the branch above.
+        setOpen(true);
 
         const timer = window.setTimeout(() => {
             props.search(term).then(
@@ -226,7 +251,9 @@ export function LookupSearchControl(props: IProps): React.ReactElement | null {
 
                     setCandidates(rows);
                     setStatus(rows.length > 0 ? 'results' : 'noMatches');
-                    setOpen(rows.length > 0);
+                    // Both outcomes have something in the dropdown: the rows,
+                    // or the line saying there were none.
+                    setOpen(true);
                 },
                 (error: unknown) => {
                     if (!live) {
@@ -234,6 +261,9 @@ export function LookupSearchControl(props: IProps): React.ReactElement | null {
                     }
 
                     setCandidates([]);
+                    // The one case that genuinely closes it: a failure is not a
+                    // result, and it is rendered under the field rather than in
+                    // a dropdown left open over nothing.
                     setOpen(false);
                     setStatus('idle');
                     // The platform's message is the only account of a mistyped
@@ -351,7 +381,7 @@ export function LookupSearchControl(props: IProps): React.ReactElement | null {
             theme={props.theme ?? webLightTheme}
             dir={props.isRTL ? 'rtl' : 'ltr'}
         >
-            <div className={field}>
+            <div className={field} ref={setFieldEl}>
                 {selected !== null ? (
                     <span className="LookupSearch-chip">
                         <span className="LookupSearch-chip-icon">
@@ -414,6 +444,12 @@ export function LookupSearchControl(props: IProps): React.ReactElement | null {
                         // stylesheet targets it directly — still namespaced, so
                         // it cannot touch the host page.
                         listbox={{ className: 'LookupSearch-listbox' }}
+                        // Anchor and size the dropdown to the whole field, not
+                        // to the Combobox inside it. Without the explicit
+                        // target, Fluent measures its own trigger and the
+                        // dropdown lands exactly one browse-button short of the
+                        // control's right edge.
+                        positioning={{ target: fieldEl, matchTargetSize: 'width' }}
                     >
                         {candidates.length > 0 ? (
                             candidates.map((candidate) => (
