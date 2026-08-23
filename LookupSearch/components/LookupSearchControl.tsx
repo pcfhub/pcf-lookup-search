@@ -294,17 +294,22 @@ export function LookupSearchControl(props: IProps): React.ReactElement | null {
         );
     };
 
-    const message = (): string => {
-        if (!props.entityType) {
-            return strings.noTarget;
-        }
-
-        if (selected !== null) {
+    /*
+     * Two kinds of message, and they belong in two different places.
+     *
+     * Anything about the *search* — how much more to type, that a request is in
+     * flight, that nothing matched — goes inside the dropdown, where the
+     * platform's own lookup puts "No records found". It is transient, it is
+     * about the list, and under the field it reads as a fault in the control.
+     *
+     * Anything about the control's *state* — no target column, no search on
+     * this host, a failing business rule, a rejected query — stays under the
+     * field. It persists, it is not about the list, and there may be no
+     * dropdown open to put it in.
+     */
+    const popupMessage = (): string => {
+        if (selected !== null || canSearch !== true) {
             return '';
-        }
-
-        if (canSearch === false) {
-            return strings.searchUnavailable;
         }
 
         switch (status) {
@@ -319,6 +324,15 @@ export function LookupSearchControl(props: IProps): React.ReactElement | null {
         }
     };
 
+    const fieldMessage = (): string => {
+        if (!props.entityType) {
+            return strings.noTarget;
+        }
+
+        return selected === null && canSearch === false ? strings.searchUnavailable : '';
+    };
+
+    const popupText = popupMessage();
     const invalid = props.errorMessage !== null || failure !== null;
     const searchable = canSearch === true && !props.disabled;
     const browsable = props.allowBrowse && props.entityType !== '' && !props.disabled;
@@ -382,7 +396,9 @@ export function LookupSearchControl(props: IProps): React.ReactElement | null {
                         // the platform did not echo back.
                         value={query}
                         selectedOptions={[]}
-                        open={open && candidates.length > 0}
+                        // Open for anything worth showing, not only for results:
+                        // the message rows below live in here too.
+                        open={open && (candidates.length > 0 || popupText !== '')}
                         onOpenChange={(_, data) => setOpen(data.open)}
                         onChange={(event) => setQuery(event.target.value)}
                         onOptionSelect={(_, data) => onSelect(data.optionValue)}
@@ -391,23 +407,41 @@ export function LookupSearchControl(props: IProps): React.ReactElement | null {
                         aria-label={props.label || strings.fallbackLabel}
                         aria-invalid={invalid}
                         aria-describedby={statusId.current}
+                        // Fluent renders the listbox through a portal, so it is
+                        // NOT a descendant of this control's root element and
+                        // nothing scoped under `.LookupSearch` reaches it. The
+                        // class goes on the listbox itself instead, and the
+                        // stylesheet targets it directly — still namespaced, so
+                        // it cannot touch the host page.
+                        listbox={{ className: 'LookupSearch-listbox' }}
                     >
-                        {candidates.map((candidate) => (
-                            <Option key={candidate.id} value={candidate.id} text={candidate.name}>
-                                <span className="LookupSearch-option">
-                                    <span className="LookupSearch-option-name">{candidate.name}</span>
-                                    {candidate.secondary !== '' && (
-                                        <span className="LookupSearch-option-secondary">
-                                            {candidate.secondary}
-                                        </span>
-                                    )}
-                                </span>
-                            </Option>
-                        ))}
+                        {candidates.length > 0 ? (
+                            candidates.map((candidate) => (
+                                <Option key={candidate.id} value={candidate.id} text={candidate.name}>
+                                    <span className="LookupSearch-option">
+                                        <span className="LookupSearch-option-name">{candidate.name}</span>
+                                        {candidate.secondary !== '' && (
+                                            <span className="LookupSearch-option-secondary">
+                                                {candidate.secondary}
+                                            </span>
+                                        )}
+                                    </span>
+                                </Option>
+                            ))
+                        ) : (
+                            // Not an <Option>: a disabled option is still
+                            // announced as a choice and is still in the keyboard
+                            // order, and none of this is choosable. The live
+                            // region under the field is what announces it.
+                            <div className="LookupSearch-notice" role="presentation">
+                                {status === 'searching' && (
+                                    <Spinner size="extra-tiny" aria-hidden="true" />
+                                )}
+                                <span>{popupText}</span>
+                            </div>
+                        )}
                     </Combobox>
                 )}
-
-                {status === 'searching' && <Spinner size="extra-tiny" aria-hidden="true" />}
 
                 {browsable && (
                     <button
@@ -423,19 +457,25 @@ export function LookupSearchControl(props: IProps): React.ReactElement | null {
             </div>
 
             {/*
-                Rendered whether or not it has anything to say: a live region
-                announces changes to text inside it, and one that appears at the
-                same moment as its text is announced by fewer screen readers
-                than one that was already there.
+                The search messages moved into the dropdown, where they are
+                visible — but a dropdown is not a live region, and it appears at
+                the same moment as its text, which is announced by fewer screen
+                readers than an element that was already there. So this stays,
+                carrying the same words with nothing to look at: always present,
+                visually hidden, and the target of `aria-describedby`.
             */}
             <p
-                className="LookupSearch-message"
+                className="LookupSearch-live"
                 id={statusId.current}
                 role="status"
                 aria-live="polite"
             >
-                {message()}
+                {popupText}
             </p>
+
+            {fieldMessage() !== '' && (
+                <p className="LookupSearch-message">{fieldMessage()}</p>
+            )}
 
             {failure !== null && (
                 <p className="LookupSearch-message LookupSearch-message--error" role="alert">

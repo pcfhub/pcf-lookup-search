@@ -164,6 +164,13 @@ second item beside it — that the visible state shows the *message*, not the
 object. This control satisfied the first and failed the second, which is what
 the pair is there to catch.
 
+The dead-stylesheet bug went with them at 0.11.2: a portalled Fluent surface is
+not a descendant of the control's root, so rules scoped under the root class
+silently reach nothing inside it. This control shipped two of them — the name
+and secondary line of every result row — and found them only by reading Fluent's
+source. `control-patterns.md` now carries it beside the `FluentProvider` note,
+which had covered the theming half of the same fact and not the styling half.
+
 Nothing is queued.
 
 One correction went with them rather than a promotion: an earlier draft of this

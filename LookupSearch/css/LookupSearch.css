@@ -197,16 +197,28 @@
     margin-inline-start: auto;
 }
 
+/*
+ * Everything below is inside the dropdown, and the dropdown is NOT inside this
+ * control.
+ *
+ * Fluent renders the listbox through a portal, attached near the end of the
+ * document rather than under the control's root — so `.LookupSearch .whatever`
+ * matches nothing there, silently. These selectors lead with the listbox's own
+ * class instead, which the component puts on the `listbox` slot. Still
+ * namespaced, so still incapable of touching the host page; just anchored
+ * somewhere that exists.
+ */
+
 /* Two lines per result: the record's name, and whatever tells two of them
    apart. */
-.LookupSearch .LookupSearch-option {
+.LookupSearch-listbox .LookupSearch-option {
     display: flex;
     flex-direction: column;
     gap: 2px;
     min-width: 0;
 }
 
-.LookupSearch .LookupSearch-option-secondary {
+.LookupSearch-listbox .LookupSearch-option-secondary {
     font-size: 12px;
     color: var(--colorNeutralForeground3, #616161);
     overflow: hidden;
@@ -214,6 +226,21 @@
     white-space: nowrap;
 }
 
+/*
+ * "Searching…", "no matches", "type more" — the platform's own lookup shows
+ * these inside the list, not under the field, and it is right: they are about
+ * the list. Padded to sit where an option would, but not shaped like one, since
+ * there is nothing here to choose.
+ */
+.LookupSearch-listbox .LookupSearch-notice {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    color: var(--colorNeutralForeground2, #424242);
+}
+
+/* Under the field: the control's own state, and the platform's errors. */
 .LookupSearch .LookupSearch-message {
     margin: 4px 0 0;
     font-size: 12px;
@@ -222,4 +249,27 @@
 
 .LookupSearch .LookupSearch-message--error {
     color: var(--colorPaletteRedForeground1, #b10e1c);
+}
+
+/*
+ * Announced, not shown. The words are already on screen inside the dropdown;
+ * this is the copy that a screen reader is told about, and it has to exist
+ * before the text arrives for that to work.
+ *
+ * `clip-path` is what does the hiding in current browsers; `clip` is kept for
+ * the older engines that still ignore it. `display: none` and
+ * `visibility: hidden` would remove it from the accessibility tree entirely,
+ * which is the one thing this element must not do.
+ */
+.LookupSearch .LookupSearch-live {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
 }
