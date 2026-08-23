@@ -5,10 +5,10 @@
  * control on the form, so a bare `input { … }` here restyles the page it was
  * dropped onto. The platform does not sandbox this for you.
  *
- * There is deliberately little here. The field, the popup and the buttons are
- * Fluent components rendered under a `FluentProvider` carrying the host's own
- * theme, so anything this file states about colour is a second opinion that can
- * only disagree with the environment. What is left is layout.
+ * Colours are Fluent tokens — CSS custom properties emitted by the
+ * `FluentProvider` above, carrying the host's own theme. Each has a fallback,
+ * because the same markup renders in the test harness where nothing defines
+ * them. Nothing here states a literal brand colour.
  */
 
 .LookupSearch {
@@ -20,20 +20,185 @@
     background-color: transparent;
 }
 
-.LookupSearch .LookupSearch-row {
+/*
+ * One bordered field holding either the search box or the selected record,
+ * with the actions inside that border. The platform's own lookup puts its
+ * remove and search affordances inside the field; buttons sitting beside it
+ * read as part of the form, not as part of the control.
+ */
+.LookupSearch .LookupSearch-field {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 2px;
+    box-sizing: border-box;
+    min-height: 32px;
+    padding: 0 2px 0 0;
+    border: 1px solid var(--colorNeutralStroke1, #d1d1d1);
+    border-radius: var(--borderRadiusMedium, 4px);
+    background-color: var(--colorNeutralBackground1, #ffffff);
 }
 
-.LookupSearch .LookupSearch-input {
-    /* `min-width: 0` is what lets the field shrink inside the row. A flex item
-       defaults to `min-width: auto`, which floors it at its content width and
-       pushes the buttons out of a narrow form section instead. */
+.LookupSearch .LookupSearch-field:focus-within {
+    border-color: var(--colorCompoundBrandStroke, #0f6cbd);
+}
+
+/* The selected state is the platform's: a filled row rather than an input. */
+.LookupSearch .LookupSearch-field--filled {
+    padding-left: 4px;
+    background-color: var(--colorNeutralBackground3, #f5f5f5);
+}
+
+.LookupSearch .LookupSearch-field--disabled {
+    background-color: var(--colorNeutralBackgroundDisabled, #f0f0f0);
+    border-color: var(--colorNeutralStrokeDisabled, #e0e0e0);
+}
+
+.LookupSearch .LookupSearch-field--invalid {
+    border-color: var(--colorPaletteRedBorder2, #b10e1c);
+}
+
+/*
+ * Fluent's Combobox draws its own border and focus underline. Here it is the
+ * *contents* of a field that already has both, so its chrome is removed rather
+ * than nested. Griffel emits single-class rules, so these two-class selectors
+ * win on specificity without `!important`.
+ */
+.LookupSearch .LookupSearch-combobox {
     flex: 1 1 auto;
+    /* A flex item defaults to `min-width: auto`, which floors it at its content
+       width and pushes the buttons out of a narrow form section. */
     min-width: 0;
+    border: none;
+    background-color: transparent;
 }
 
+.LookupSearch .LookupSearch-combobox::after {
+    display: none;
+}
+
+/*
+ * The selected record, as the platform draws it: a tinted pill holding the
+ * icon, the record's name and the remove button together.
+ *
+ * `flex: 0 1 auto` shrink-wraps the pill around its content rather than
+ * stretching it across the field — which is what makes it read as one object
+ * and keeps the remove button beside the name it removes. The space to the
+ * right of the pill belongs to the field, and nothing in it is clickable.
+ */
+.LookupSearch .LookupSearch-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex: 0 1 auto;
+    min-width: 0;
+    padding: 1px 2px 1px 6px;
+    border-radius: var(--borderRadiusSmall, 2px);
+    background-color: var(--colorBrandBackground2, #ebf3fc);
+}
+
+.LookupSearch .LookupSearch-chip-icon {
+    display: inline-flex;
+    flex: 0 0 auto;
+    color: var(--colorBrandForeground1, #0f6cbd);
+}
+
+/*
+ * `flex: 0 1 auto`, not `1 1 auto`, and the difference is the whole behaviour of
+ * this row.
+ *
+ * Growing the name to fill the chip does two wrong things at once: the clickable
+ * area becomes the entire width of the field, so the empty space to the right of
+ * a short name opens the record, and the remove button is pushed to the far edge
+ * away from the name it removes. Shrink-wrapping keeps the target on the text,
+ * puts the × beside it, and leaves the empty space inert — which is where the
+ * platform's own lookup puts both.
+ *
+ * It still shrinks: `min-width: 0` lets a long name ellipsis rather than
+ * shouldering the × out of the field.
+ */
+.LookupSearch .LookupSearch-chip-name {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font: inherit;
+    text-align: start;
+    color: var(--colorNeutralForeground1, #242424);
+}
+
+/* A real button rather than an anchor: it opens a record through the
+   platform's navigation, not through an href, and a link with no href is not
+   keyboard reachable. */
+.LookupSearch .LookupSearch-chip-name--link {
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+    /* Underlined at rest, as the platform's lookup draws it — the underline is
+       what says "this opens the record" before anyone hovers. */
+    text-decoration: underline;
+    color: var(--colorBrandForegroundLink, #0f6cbd);
+}
+
+.LookupSearch .LookupSearch-chip-name--link:hover {
+    color: var(--colorBrandForegroundLinkHover, #115ea3);
+}
+
+/* Remove and browse: same 24px target, so they sit level in the field. */
+.LookupSearch .LookupSearch-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: none;
+    border-radius: var(--borderRadiusSmall, 2px);
+    background: none;
+    cursor: pointer;
+    color: var(--colorNeutralForeground2, #424242);
+}
+
+.LookupSearch .LookupSearch-action:hover {
+    background-color: var(--colorNeutralBackground1Hover, #f5f5f5);
+    color: var(--colorNeutralForeground1, #242424);
+}
+
+.LookupSearch .LookupSearch-action:focus-visible {
+    outline: 2px solid var(--colorStrokeFocus2, #000000);
+    outline-offset: -2px;
+}
+
+/*
+ * Inside the pill, so it takes the pill's colour rather than the field's.
+ *
+ * It keeps the shared 24px hit area even though the glyph is 12px and the
+ * platform's own × looks smaller than that. WCAG 2.2 asks for 24px pointer
+ * targets, and shrinking a remove control to match a screenshot is the wrong
+ * trade — the glyph is what reads as small, not the target.
+ */
+.LookupSearch .LookupSearch-action--remove {
+    color: var(--colorBrandForegroundLink, #0f6cbd);
+}
+
+.LookupSearch .LookupSearch-action--remove:hover {
+    background-color: var(--colorBrandBackground2Hover, #cfe4fa);
+    color: var(--colorBrandForegroundLinkHover, #115ea3);
+}
+
+/*
+ * Pushed to the far end of the field, away from the pill. `margin-inline-start`
+ * rather than `margin-left` so it follows `dir` in a right-to-left environment
+ * instead of pinning itself to the wrong edge.
+ */
+.LookupSearch .LookupSearch-action--browse {
+    margin-inline-start: auto;
+}
+
+/* Two lines per result: the record's name, and whatever tells two of them
+   apart. */
 .LookupSearch .LookupSearch-option {
     display: flex;
     flex-direction: column;
@@ -43,10 +208,7 @@
 
 .LookupSearch .LookupSearch-option-secondary {
     font-size: 12px;
-    /* Fluent's tokens are CSS custom properties defined by the FluentProvider
-       above, so they follow the host theme. The fallbacks matter: the same
-       markup renders in the test harness, where nothing defines them. */
-    color: var(--colorNeutralForeground3, inherit);
+    color: var(--colorNeutralForeground3, #616161);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -55,9 +217,9 @@
 .LookupSearch .LookupSearch-message {
     margin: 4px 0 0;
     font-size: 12px;
-    color: var(--colorNeutralForeground3, inherit);
+    color: var(--colorNeutralForeground3, #616161);
 }
 
 .LookupSearch .LookupSearch-message--error {
-    color: var(--colorPaletteRedForeground1, LinkText);
+    color: var(--colorPaletteRedForeground1, #b10e1c);
 }

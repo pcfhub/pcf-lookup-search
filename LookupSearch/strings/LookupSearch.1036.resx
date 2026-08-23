@@ -151,6 +151,9 @@
   <data name="LookupSearch_SearchUnavailable" xml:space="preserve">
     <value>La recherche n'est pas disponible ici : cette application n'a pas fourni les colonnes de la table cible.</value>
   </data>
+  <data name="LookupSearch_SearchFailed" xml:space="preserve">
+    <value>La recherche n'a pas pu aboutir.</value>
+  </data>
   <data name="LookupSearch_NoTarget" xml:space="preserve">
     <value>Ce composant doit être placé sur une colonne de recherche.</value>
   </data>

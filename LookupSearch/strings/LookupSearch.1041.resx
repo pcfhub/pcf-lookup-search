@@ -151,6 +151,9 @@
   <data name="LookupSearch_SearchUnavailable" xml:space="preserve">
     <value>ここでは検索を利用できません。対象テーブルの列情報がこのアプリから取得できませんでした。</value>
   </data>
+  <data name="LookupSearch_SearchFailed" xml:space="preserve">
+    <value>検索を完了できませんでした。</value>
+  </data>
   <data name="LookupSearch_NoTarget" xml:space="preserve">
     <value>このコントロールは参照列に配置する必要があります。</value>
   </data>

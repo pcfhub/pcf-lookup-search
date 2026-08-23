@@ -151,6 +151,9 @@
   <data name="LookupSearch_SearchUnavailable" xml:space="preserve">
     <value>Search is unavailable here — this app did not supply the target table's columns.</value>
   </data>
+  <data name="LookupSearch_SearchFailed" xml:space="preserve">
+    <value>The search could not be completed.</value>
+  </data>
   <data name="LookupSearch_NoTarget" xml:space="preserve">
     <value>This control must be placed on a lookup column.</value>
   </data>

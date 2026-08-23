@@ -151,6 +151,9 @@
   <data name="LookupSearch_SearchUnavailable" xml:space="preserve">
     <value>Die Suche ist hier nicht verfügbar – diese App hat die Spalten der Zieltabelle nicht bereitgestellt.</value>
   </data>
+  <data name="LookupSearch_SearchFailed" xml:space="preserve">
+    <value>Die Suche konnte nicht abgeschlossen werden.</value>
+  </data>
   <data name="LookupSearch_NoTarget" xml:space="preserve">
     <value>Dieses Steuerelement muss auf einer Lookup-Spalte platziert werden.</value>
   </data>

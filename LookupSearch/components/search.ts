@@ -107,7 +107,43 @@ export function buildQuery(columns: QueryColumns, matchMode: MatchMode, term: st
 
     const filter = clauses.length > 1 ? `(${clauses.join(' or ')})` : clauses.join('');
 
-    return `?$select=${select.join(',')}&$filter=${filter}&$orderby=${columns.primaryName} asc`;
+    // `%20` rather than a literal space: the whole options string is meant to be
+    // encoded, and this is the only place the builder produces one.
+    return `?$select=${select.join(',')}&$filter=${filter}&$orderby=${columns.primaryName}%20asc`;
+}
+
+/**
+ * What to show the user when a platform call rejects.
+ *
+ * **`context.webAPI` does not reject with an `Error`.** It rejects with a plain
+ * object carrying `errorCode` and `message`, exactly as the Client API's
+ * `errorCallback` documents — so the usual
+ * `error instanceof Error ? error.message : String(error)` falls through to
+ * `String({…})` and renders the string `[object Object]` under the control.
+ * That is not a cosmetic bug: it replaces the only account of what went wrong
+ * with a message that says nothing, and it is the shape *every* webAPI failure
+ * arrives in, so it is the message every user would have seen.
+ *
+ * Observed on a real model-driven form, typing into a contact lookup.
+ */
+export function describeError(error: unknown): string {
+    if (error instanceof Error && error.message) {
+        return error.message;
+    }
+
+    if (typeof error === 'object' && error !== null) {
+        const message = (error as { message?: unknown }).message;
+
+        if (typeof message === 'string' && message !== '') {
+            return message;
+        }
+    }
+
+    if (typeof error === 'string' && error !== '') {
+        return error;
+    }
+
+    return '';
 }
 
 /**

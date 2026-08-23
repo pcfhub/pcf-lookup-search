@@ -109,6 +109,14 @@ export class LookupSearch implements ComponentFramework.ReactControl<IInputs, IO
             prepare: (): Promise<boolean> => this.prepare(),
             search: (term: string): Promise<Candidate[]> => this.search(term),
             browse: (): Promise<LookupValue | null> => this.browse(),
+            // The platform's own lookup renders the selected record as a link
+            // to it. `openForm` needs no <uses-feature>, so this costs the
+            // maker no extra permission — but it is still absent on hosts
+            // without navigation, and a link that does nothing is worse than
+            // plain text.
+            openRecord: typeof context.navigation?.openForm === 'function'
+                ? (value: LookupValue): void => this.openRecord(value)
+                : null,
             onChange: (next: LookupValue | null): void => {
                 this.selected = next;
                 this.notifyOutputChanged();
@@ -302,6 +310,24 @@ export class LookupSearch implements ComponentFramework.ReactControl<IInputs, IO
         return picked?.[0] ?? null;
     }
 
+    /**
+     * Open the selected record, the way the stock lookup's link does.
+     *
+     * Failures are swallowed deliberately: the user asked to navigate, and if
+     * the host refuses there is nothing for them to act on — unlike a failed
+     * search, where the message names a column somebody has to fix.
+     */
+    private openRecord(value: LookupValue): void {
+        const entityName = value.entityType ?? this.target;
+
+        if (!entityName) {
+            return;
+        }
+
+        void this.context.navigation.openForm({ entityName, entityId: value.id })
+            .catch(() => undefined);
+    }
+
     private readStrings(context: ComponentFramework.Context<IInputs>): ILookupStrings {
         const get = (key: string): string => context.resources.getString(key);
 
@@ -315,6 +341,7 @@ export class LookupSearch implements ComponentFramework.ReactControl<IInputs, IO
             typeMore: get('LookupSearch_TypeMore'),
             searchUnavailable: get('LookupSearch_SearchUnavailable'),
             noTarget: get('LookupSearch_NoTarget'),
+            searchFailed: get('LookupSearch_SearchFailed'),
         };
     }
 }

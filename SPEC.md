@@ -80,19 +80,43 @@ The consequence worth flagging: **the demo's default state is the control's
 degraded state**, which no correctly configured form ever shows. The limitations
 say so rather than leaving a visitor to conclude the control is broken.
 
+## What a real form settled
+
+The control was placed on a contact lookup and typed into. Two entries moved out
+of *Not verified* on the strength of what that proved, and one bug came back.
+
+**`getTargetEntityType()` and `getEntityMetadata()` both work**, and neither
+needed a fallback. This is inference rather than a console reading, but it is
+tight: the search only runs when `canSearch` is true, `canSearch` is true only
+when the metadata call resolved with both column names, and that call is only
+made against a non-empty target. A request was sent, so both returned.
+
+**`context.webAPI` does not reject with an `Error`.** It rejects with a plain
+object carrying `errorCode` and `message`, exactly as the Client API's
+`errorCallback` documents — and the usual
+`error instanceof Error ? error.message : String(error)` therefore rendered the
+literal string **`[object Object]`** under the field. Every webAPI failure would
+have shown it, which means the control's only account of what went wrong was
+replaced by a message that says nothing. Fixed in `describeError`, which reads
+`message` off an object shape before falling back to a localised sentence.
+
+That leaves the underlying failure still unread: something about a `startswith`
+query against that contact lookup was rejected, and the message that would say
+what was the thing being swallowed. The next run on that form is what settles
+it.
+
 ## Not verified
 
 Everything below needs a model-driven form, and none of it has met one.
 
-- **`getTargetEntityType()` returning the target on a real lookup column.** The
-  whole control is built on it. What would prove it: place the control on a
-  contact lookup and confirm the search queries `contact`.
-- **`getEntityMetadata()` returning `PrimaryIdAttribute` / `PrimaryNameAttribute`
-  by name.** Read as `metadata.PrimaryNameAttribute` rather than by walking the
-  object, per the skill's warning about prototype getters — but the specific
-  field names are from the Dataverse metadata schema, not from an observed call.
+- **What the failed search actually said.** The message is now rendered instead
+  of stringified, so retyping into the same field is the whole test.
 - **The write reaching the column.** `getOutputs` returns a one-element array;
   that a form persists it, and that `[]` clears it, is untested.
+- **The chip, and the record link on it.** The selected state cannot be produced
+  locally at all — `pcf-start` will not build a lookup value — so the chip, its
+  remove button, and `navigation.openForm` behind the record name have been
+  compiled and styled but never rendered with a value in them.
 - **`lookupObjects` opening on `defaultViewId`.** The view id comes from
   `getViewId()`, which has the same harness caveat as the target.
 - **The demo presets' bound value shape.** `"value": [{ id, name, entityType }]`
@@ -128,9 +152,19 @@ naming the rule.
 
 ## Promoting a finding
 
-All five findings this control produced have been promoted, at skill version
+All five findings from building the control were promoted at skill version
 0.11.0 — the table under *Platform behaviour worth knowing* says which section
-each landed in. Nothing is queued here.
+each landed in.
+
+The bug the form reported went with them, at 0.11.1: `context.webAPI` rejecting
+with a plain `{ errorCode, message }` rather than an `Error` is now a section of
+its own in `control-patterns.md`, carrying the `describeError` shape that fixes
+it. The review checklist's item about not swallowing webAPI errors gained a
+second item beside it — that the visible state shows the *message*, not the
+object. This control satisfied the first and failed the second, which is what
+the pair is there to catch.
+
+Nothing is queued.
 
 One correction went with them rather than a promotion: an earlier draft of this
 file said `pcf-choices-picker` hard-codes `webLightTheme` and so asserts a light
