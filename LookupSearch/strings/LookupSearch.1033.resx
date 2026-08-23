@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!--
+    English (1033) strings for everything declared in
+    ControlManifest.Input.xml, plus the strings index.ts renders at runtime.
+    PCFHub reads the manifest, so the property names and descriptions here are
+    what appear in the component's API reference as well as in the maker's
+    properties pane.
+
+    All five files carry the SAME key set. A key missing from one language falls
+    back to the key name in that language only, which nobody notices until a
+    customer does — so change them together, or not at all.
+  -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <data name="LookupSearch_Name" xml:space="preserve">
+    <value>Lookup Search</value>
+  </data>
+  <data name="LookupSearch_Desc" xml:space="preserve">
+    <value>A lookup column as a type-ahead search over the target table.</value>
+  </data>
+  <data name="value_Name" xml:space="preserve">
+    <value>Value</value>
+  </data>
+  <data name="value_Desc" xml:space="preserve">
+    <value>The lookup column this control reads and writes.</value>
+  </data>
+  <data name="placeholder_Name" xml:space="preserve">
+    <value>Placeholder</value>
+  </data>
+  <data name="placeholder_Desc" xml:space="preserve">
+    <value>Hint text shown while no record is selected.</value>
+  </data>
+  <data name="matchMode_Name" xml:space="preserve">
+    <value>Match mode</value>
+  </data>
+  <data name="matchMode_Desc" xml:space="preserve">
+    <value>How typed text is matched: from the start of the value, or anywhere in it. Starts with is the faster of the two.</value>
+  </data>
+  <data name="matchMode_StartsWith_Name" xml:space="preserve">
+    <value>Starts with</value>
+  </data>
+  <data name="matchMode_Contains_Name" xml:space="preserve">
+    <value>Contains</value>
+  </data>
+  <data name="minimumCharacters_Name" xml:space="preserve">
+    <value>Minimum characters</value>
+  </data>
+  <data name="minimumCharacters_Desc" xml:space="preserve">
+    <value>How many characters must be typed before a search runs. Default 2.</value>
+  </data>
+  <data name="maxResults_Name" xml:space="preserve">
+    <value>Maximum results</value>
+  </data>
+  <data name="maxResults_Desc" xml:space="preserve">
+    <value>How many matches to show. Default 8.</value>
+  </data>
+  <data name="secondaryColumn_Name" xml:space="preserve">
+    <value>Secondary column</value>
+  </data>
+  <data name="secondaryColumn_Desc" xml:space="preserve">
+    <value>Logical name of a column shown under each result, such as emailaddress1. Leave empty for none.</value>
+  </data>
+  <data name="searchColumns_Name" xml:space="preserve">
+    <value>Search columns</value>
+  </data>
+  <data name="searchColumns_Desc" xml:space="preserve">
+    <value>Extra columns to match against, comma separated. The table's primary name column is always searched.</value>
+  </data>
+  <data name="allowBrowse_Name" xml:space="preserve">
+    <value>Allow browse</value>
+  </data>
+  <data name="allowBrowse_Desc" xml:space="preserve">
+    <value>Show a button that opens the platform's own lookup panel, for when the search box cannot find it.</value>
+  </data>
+  <data name="LookupSearch_NoAccess" xml:space="preserve">
+    <value>You do not have access to this value.</value>
+  </data>
+  <data name="LookupSearch_Browse" xml:space="preserve">
+    <value>Browse</value>
+  </data>
+  <data name="LookupSearch_Clear" xml:space="preserve">
+    <value>Clear</value>
+  </data>
+  <data name="LookupSearch_Searching" xml:space="preserve">
+    <value>Searching…</value>
+  </data>
+  <data name="LookupSearch_NoMatches" xml:space="preserve">
+    <value>No matching records.</value>
+  </data>
+  <data name="LookupSearch_TypeMore" xml:space="preserve">
+    <value>Type at least {0} characters to search.</value>
+  </data>
+  <data name="LookupSearch_SearchUnavailable" xml:space="preserve">
+    <value>Search is unavailable here — this app did not supply the target table's columns.</value>
+  </data>
+  <data name="LookupSearch_NoTarget" xml:space="preserve">
+    <value>This control must be placed on a lookup column.</value>
+  </data>
+</root>

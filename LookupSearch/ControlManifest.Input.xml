@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<manifest>
+  <!--
+    The version here is what the Power Platform upgrades on, and the release
+    workflow refuses to publish a tag that disagrees with it. Bump this in the
+    same commit as the tag.
+  -->
+  <control namespace="PCFHub"
+           constructor="LookupSearch"
+           version="0.1.0"
+           display-name-key="LookupSearch_Name"
+           description-key="LookupSearch_Desc"
+           control-type="virtual">
+
+    <!--
+      Leave this disabled unless the control calls a third-party service. A
+      control that declares external usage is treated as premium, and every
+      domain it talks to has to be listed.
+
+      Dataverse is not a third-party service: this control reads through
+      `context.webAPI`, which is the platform's own surface and is declared
+      under <feature-usage> below instead.
+    -->
+    <external-service-usage enabled="false" />
+
+    <!--
+      PCFHub generates the component's API reference from this file, at the tag
+      of each release.
+
+      It records `display-name-key` and `description-key` *verbatim* — it does
+      not read the .resx — so a reader sees the key itself unless something
+      changes it. Two ways to get readable text: keep the keys themselves
+      readable, or correct them once in the hub's admin panel, where editing a
+      property locks that field so later syncs leave it alone.
+
+      The platform still resolves these against the .resx for the maker's
+      properties pane, so the keys must exist there either way.
+    -->
+
+    <!--
+      ONE bound property, and that is a rule rather than a simplification.
+
+      A field control binds its *first* bound property to the column it is
+      placed on, and renders every additional bound property as its own column
+      picker in the configuration pane — so a second lookup here would ask the
+      maker to choose a second column for a control that attaches to exactly
+      one. `required="false"` does not suppress it. Microsoft's own
+      LookupSimpleControl sample declares two and pays that cost deliberately,
+      to demonstrate the binding; a control people put on production forms
+      should not.
+
+      `Lookup.Simple` is model-driven only. There is no canvas story for this
+      control at all, which is why docs/canvas.md is not in this repository.
+
+      The raw value is a LookupValue[], not a LookupValue: it arrives empty
+      rather than null when the column has no value, and it is cleared by
+      writing [] back.
+    -->
+    <property name="value"
+              display-name-key="value_Name"
+              description-key="value_Desc"
+              of-type="Lookup.Simple"
+              usage="bound"
+              required="true" />
+
+    <property name="placeholder"
+              display-name-key="placeholder_Name"
+              description-key="placeholder_Desc"
+              of-type="SingleLine.Text"
+              usage="input"
+              required="false" />
+
+    <!--
+      Enum rather than TwoOptions, because it generates a real string union —
+      `EnumProperty<"startsWith" | "contains">` — in
+      generated/ManifestTypes.d.ts, where a boolean would generate a name that
+      says nothing about which way round it reads.
+
+      Read it defensively anyway. The union is a compile-time claim about a
+      runtime the compiler does not control.
+
+      `startsWith` is the default because it is the one Dataverse can serve from
+      an index. `contains` is a scan, and on a large table the maker will feel
+      it — which is a decision worth making explicitly rather than inheriting.
+    -->
+    <property name="matchMode"
+              display-name-key="matchMode_Name"
+              description-key="matchMode_Desc"
+              of-type="Enum"
+              usage="input"
+              required="false"
+              default-value="startsWith">
+      <value name="startsWith" display-name-key="matchMode_StartsWith_Name">startsWith</value>
+      <value name="contains" display-name-key="matchMode_Contains_Name">contains</value>
+    </property>
+
+    <property name="minimumCharacters"
+              display-name-key="minimumCharacters_Name"
+              description-key="minimumCharacters_Desc"
+              of-type="Whole.None"
+              usage="input"
+              required="false"
+              default-value="2" />
+
+    <property name="maxResults"
+              display-name-key="maxResults_Name"
+              description-key="maxResults_Desc"
+              of-type="Whole.None"
+              usage="input"
+              required="false"
+              default-value="8" />
+
+    <!--
+      Both of these are logical names, and neither can be validated here. A typo
+      reaches Dataverse as part of a $select and comes back as a 400 the user
+      sees — which is why the control surfaces the error text rather than
+      swallowing it.
+    -->
+    <property name="secondaryColumn"
+              display-name-key="secondaryColumn_Name"
+              description-key="secondaryColumn_Desc"
+              of-type="SingleLine.Text"
+              usage="input"
+              required="false" />
+
+    <property name="searchColumns"
+              display-name-key="searchColumns_Name"
+              description-key="searchColumns_Desc"
+              of-type="SingleLine.Text"
+              usage="input"
+              required="false" />
+
+    <property name="allowBrowse"
+              display-name-key="allowBrowse_Name"
+              description-key="allowBrowse_Desc"
+              of-type="TwoOptions"
+              usage="input"
+              required="false"
+              default-value="true" />
+
+    <resources>
+      <code path="index.ts" order="1" />
+      <platform-library name="React" version="16.14.0" />
+      <platform-library name="Fluent" version="9.46.2" />
+      <css path="css/LookupSearch.css" order="1" />
+      <!--
+        1033 first, which is the order every other control in this family uses
+        and the one a reader expects. It has no effect on a real app: the
+        platform resolves the .resx from the user's provisioned language.
+
+        It does have an effect in `npm start`. The local test harness ignores
+        LCID and browser locale and reads whichever file is listed **last** —
+        put 3082 at the bottom and every string in the harness is Spanish.
+        Verified by reordering this block and rebuilding, twice. Do not
+        reorder these to "fix" the harness: the manifest would then carry a
+        development detail that outlives the reason for it.
+      -->
+      <resx path="strings/LookupSearch.1033.resx" version="1.0.0" />
+      <resx path="strings/LookupSearch.1031.resx" version="1.0.0" />
+      <resx path="strings/LookupSearch.1036.resx" version="1.0.0" />
+      <resx path="strings/LookupSearch.1041.resx" version="1.0.0" />
+      <resx path="strings/LookupSearch.3082.resx" version="1.0.0" />
+    </resources>
+
+    <!--
+      Both required="false", and that is the pcf-kanban-board finding rather
+      than caution: with required="true", a host lacking the feature does not
+      hand the control a degraded context — it fails the component load
+      outright, and the symptom is blank space on the form pointing nowhere
+      near one XML attribute.
+
+      So the manifest asks for both optionally and index.ts feature-detects at
+      the call site. That is deliberately narrower than the type definitions,
+      which declare context.webAPI and context.utils as always present — a claim
+      about the typings, not about the host.
+
+      WebAPI  — retrieveMultipleRecords, for the type-ahead
+      Utility — getEntityMetadata for the target table's primary name column,
+                and lookupObjects for the Browse panel
+    -->
+    <feature-usage>
+      <uses-feature name="WebAPI" required="false" />
+      <uses-feature name="Utility" required="false" />
+    </feature-usage>
+  </control>
+</manifest>

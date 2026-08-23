@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!--
+    Japanese (1041) strings for everything declared in
+    ControlManifest.Input.xml, plus the strings index.ts renders at runtime.
+    PCFHub reads the manifest, so the property names and descriptions here are
+    what appear in the component's API reference as well as in the maker's
+    properties pane.
+
+    All five files carry the SAME key set. A key missing from one language falls
+    back to the key name in that language only, which nobody notices until a
+    customer does — so change them together, or not at all.
+  -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <data name="LookupSearch_Name" xml:space="preserve">
+    <value>参照検索</value>
+  </data>
+  <data name="LookupSearch_Desc" xml:space="preserve">
+    <value>参照列を、対象テーブルに対する入力候補検索として表示します。</value>
+  </data>
+  <data name="value_Name" xml:space="preserve">
+    <value>値</value>
+  </data>
+  <data name="value_Desc" xml:space="preserve">
+    <value>このコントロールが読み書きする参照列。</value>
+  </data>
+  <data name="placeholder_Name" xml:space="preserve">
+    <value>プレースホルダー</value>
+  </data>
+  <data name="placeholder_Desc" xml:space="preserve">
+    <value>レコードが選択されていないときに表示されるヒント。</value>
+  </data>
+  <data name="matchMode_Name" xml:space="preserve">
+    <value>一致モード</value>
+  </data>
+  <data name="matchMode_Desc" xml:space="preserve">
+    <value>入力した文字列の照合方法: 値の先頭から一致させるか、値のどこかに含まれるかを選びます。「前方一致」の方が高速です。</value>
+  </data>
+  <data name="matchMode_StartsWith_Name" xml:space="preserve">
+    <value>前方一致</value>
+  </data>
+  <data name="matchMode_Contains_Name" xml:space="preserve">
+    <value>部分一致</value>
+  </data>
+  <data name="minimumCharacters_Name" xml:space="preserve">
+    <value>最小文字数</value>
+  </data>
+  <data name="minimumCharacters_Desc" xml:space="preserve">
+    <value>検索を実行するまでに入力が必要な文字数。既定は 2 です。</value>
+  </data>
+  <data name="maxResults_Name" xml:space="preserve">
+    <value>最大件数</value>
+  </data>
+  <data name="maxResults_Desc" xml:space="preserve">
+    <value>表示する候補の件数。既定は 8 です。</value>
+  </data>
+  <data name="secondaryColumn_Name" xml:space="preserve">
+    <value>サブ表示列</value>
+  </data>
+  <data name="secondaryColumn_Desc" xml:space="preserve">
+    <value>各候補の下に表示する列の論理名 (例: emailaddress1)。空にすると表示しません。</value>
+  </data>
+  <data name="searchColumns_Name" xml:space="preserve">
+    <value>検索対象列</value>
+  </data>
+  <data name="searchColumns_Desc" xml:space="preserve">
+    <value>追加で検索する列をコンマ区切りで指定します。テーブルの主要名列は常に検索されます。</value>
+  </data>
+  <data name="allowBrowse_Name" xml:space="preserve">
+    <value>参照ダイアログを許可</value>
+  </data>
+  <data name="allowBrowse_Desc" xml:space="preserve">
+    <value>プラットフォーム標準の参照パネルを開くボタンを表示します。検索で見つからない場合に使います。</value>
+  </data>
+  <data name="LookupSearch_NoAccess" xml:space="preserve">
+    <value>この値にアクセスする権限がありません。</value>
+  </data>
+  <data name="LookupSearch_Browse" xml:space="preserve">
+    <value>参照</value>
+  </data>
+  <data name="LookupSearch_Clear" xml:space="preserve">
+    <value>クリア</value>
+  </data>
+  <data name="LookupSearch_Searching" xml:space="preserve">
+    <value>検索中…</value>
+  </data>
+  <data name="LookupSearch_NoMatches" xml:space="preserve">
+    <value>一致するレコードがありません。</value>
+  </data>
+  <data name="LookupSearch_TypeMore" xml:space="preserve">
+    <value>検索するには {0} 文字以上入力してください。</value>
+  </data>
+  <data name="LookupSearch_SearchUnavailable" xml:space="preserve">
+    <value>ここでは検索を利用できません。対象テーブルの列情報がこのアプリから取得できませんでした。</value>
+  </data>
+  <data name="LookupSearch_NoTarget" xml:space="preserve">
+    <value>このコントロールは参照列に配置する必要があります。</value>
+  </data>
+</root>

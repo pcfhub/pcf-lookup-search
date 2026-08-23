@@ -1,0 +1,63 @@
+/*
+ * Every rule is scoped under the control's own class.
+ *
+ * A code component shares a document with the host app and with every other
+ * control on the form, so a bare `input { … }` here restyles the page it was
+ * dropped onto. The platform does not sandbox this for you.
+ *
+ * There is deliberately little here. The field, the popup and the buttons are
+ * Fluent components rendered under a `FluentProvider` carrying the host's own
+ * theme, so anything this file states about colour is a second opinion that can
+ * only disagree with the environment. What is left is layout.
+ */
+
+.LookupSearch {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    /* FluentProvider paints its theme's canvas colour by default, which on a
+       form section reads as a box drawn around the control. */
+    background-color: transparent;
+}
+
+.LookupSearch .LookupSearch-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.LookupSearch .LookupSearch-input {
+    /* `min-width: 0` is what lets the field shrink inside the row. A flex item
+       defaults to `min-width: auto`, which floors it at its content width and
+       pushes the buttons out of a narrow form section instead. */
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.LookupSearch .LookupSearch-option {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.LookupSearch .LookupSearch-option-secondary {
+    font-size: 12px;
+    /* Fluent's tokens are CSS custom properties defined by the FluentProvider
+       above, so they follow the host theme. The fallbacks matter: the same
+       markup renders in the test harness, where nothing defines them. */
+    color: var(--colorNeutralForeground3, inherit);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.LookupSearch .LookupSearch-message {
+    margin: 4px 0 0;
+    font-size: 12px;
+    color: var(--colorNeutralForeground3, inherit);
+}
+
+.LookupSearch .LookupSearch-message--error {
+    color: var(--colorPaletteRedForeground1, LinkText);
+}
