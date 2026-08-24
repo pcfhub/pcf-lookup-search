@@ -100,25 +100,33 @@ have shown it, which means the control's only account of what went wrong was
 replaced by a message that says nothing. Fixed in `describeError`, which reads
 `message` off an object shape before falling back to a localised sentence.
 
-That leaves the underlying failure still unread: something about a `startswith`
-query against that contact lookup was rejected, and the message that would say
-what was the thing being swallowed. The next run on that form is what settles
-it.
+**The search then worked, and the failure was never read.** By the time the
+message rendered rather than stringified, the query no longer failed — so what
+the original rejection said is not recorded anywhere and now cannot be. The
+likeliest cause is the one thing that changed in the query between the two runs:
+`$orderby=<column> asc` carried a literal space, and it is now `%20`. That is a
+hypothesis, not a finding, and it is written here as one.
+
+The screenshot in `media/` is the state that settled it: two matching contacts
+listed under the field, each with the email address on a second line. That one
+image is worth four separate verifications — the query Dataverse accepts, the
+`toCandidates` mapping including a formatted secondary value, the listbox styling
+reaching portalled content, and the dropdown sized to the whole field rather than
+to the Combobox inside it.
 
 ## Not verified
 
-Everything below needs a model-driven form, and none of it has met one.
+Searching and rendering results are verified on a real form. Everything below is
+what happens *after* somebody picks one, and none of it has been watched.
 
-- **What the failed search actually said.** The message is now rendered instead
-  of stringified, so retyping into the same field is the whole test.
 - **The write reaching the column.** `getOutputs` returns a one-element array;
-  that a form persists it, and that `[]` clears it, is untested.
-- **The chip, and the record link on it.** The selected state cannot be produced
-  locally at all — `pcf-start` will not build a lookup value — so the chip, its
-  remove button, and `navigation.openForm` behind the record name have been
-  compiled and styled but never rendered with a value in them.
-- **`lookupObjects` opening on `defaultViewId`.** The view id comes from
-  `getViewId()`, which has the same harness caveat as the target.
+  that a form persists it, and that `[]` clears it, is untested. Selecting from
+  the list and saving the record is the whole test.
+- **The record link on the chip.** The chip itself has been seen on a form —
+  rendered from a value the platform supplied — but `navigation.openForm` behind
+  the record name has never been clicked.
+- **Browse.** `lookupObjects` opening at all, and opening on the `defaultViewId`
+  taken from `getViewId()`.
 - **The demo presets' bound value shape.** `"value": [{ id, name, entityType }]`
   assumes the harness builds a usable property from an array of plain objects.
   If it does not, the default preset renders as empty and the demo says nothing
@@ -127,11 +135,10 @@ Everything below needs a model-driven form, and none of it has met one.
   string filters, and `encodeURIComponent` turns a typed `%` into `%25`. Whether
   that arrives as a literal percent or as a wildcard is untested; a user typing
   `50%` is the case that would show it.
-- **Fluent's `Combobox` in `freeform` mode with a controlled `value`.** It
-  renders, and the empty and disabled states were driven in the harness — but no
-  option has ever been selected from it, because nothing local can produce
-  results to select. Selection, the popup's keyboard behaviour and focus
-  returning to the field after a pick are all untested.
+- **Choosing from Fluent's `Combobox`.** The popup now demonstrably opens with
+  real options on a form, so `freeform` with a controlled `value` is settled —
+  but nothing has been *picked* from it here. Selection, the popup's keyboard
+  behaviour, and focus returning to the field afterwards are all untested.
 
 ## What the template assumed
 

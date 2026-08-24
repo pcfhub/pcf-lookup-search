@@ -8,6 +8,8 @@ order: 1
 
 A lookup column as a type-ahead search over the target table.
 
+::image{src=media/screenshot.png alt="Typing two characters into a contact lookup, with two matching records listed beneath the field and each showing its email address on a second line" zoom}
+
 Place it on any `Lookup.Simple` column. It reads the table that column points
 at, asks Dataverse which of that table's columns is the record name, and
 searches it as the user types — showing each match with an optional second line,
