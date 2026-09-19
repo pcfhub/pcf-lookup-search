@@ -5,7 +5,8 @@
     "name": "Lookup Search",
     "tagline": "A lookup column as a type-ahead search over the target table.",
     "category": "pickers",
-    "tags": ["react", "lookup", "search", "type-ahead", "dataverse", "accessible", "model-driven"],
+    "hosts": ["model-driven"],
+    "tags": ["react", "lookup", "search", "type-ahead", "dataverse", "accessible"],
 
     "control": {
         "namespace": "PCFHub",
