@@ -88,6 +88,21 @@ export function escapeTerm(term: string): string {
     return encodeURIComponent(term.replace(/'/g, "''"));
 }
 
+/**
+ * A GUID the way the Web API writes one: no braces, lower case.
+ *
+ * The platform does not agree with itself. `utils.lookupObjects` hands a pick
+ * back braced and upper-case (`{8FE84297-…}`, measured 2026-09-11), while a
+ * lookup's `raw` and every Web API row carry the bare lower-case form. Two ids
+ * for one record compare unequal, so everything compared or sent goes through
+ * here first. Found by moving this control onto the template's rig, whose
+ * `lookupObjects` answers in the measured shape; the old one answered in the
+ * shape the control expected.
+ */
+export function bareId(id: string): string {
+    return id.replace(/^\{|\}$/g, '').toLowerCase();
+}
+
 const unique = (names: string[]): string[] => [...new Set(names.filter(Boolean))];
 
 /**

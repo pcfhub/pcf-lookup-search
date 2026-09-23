@@ -83,8 +83,25 @@ function disposeAll() {
     }
 }
 
-function mount(options) {
+/*
+ * The control's inputs as a maker leaves them. The rig's `inputs` replaces
+ * rather than merges, so a mount that changes one input names only that one
+ * and gets the rest from here.
+ */
+const INPUTS = {
+    minimumCharacters: 2,
+    allowBrowse: true,
+    searchColumns: 'name,accountnumber',
+    secondaryColumn: 'accountnumber',
+    matchMode: 'startsWith',
+    maxResults: 8,
+};
+
+function mount(given) {
     const calls = [];
+    // One organisation per mount, handed to every context the instance sees.
+    const clientUrl = host.nextClientUrl();
+    const options = { ...given, clientUrl, inputs: { ...INPUTS, ...(given.inputs || {}) } };
     const context = host.createContext({ ...options, calls, getString: marked });
     const instance = new registration.ctor();
 
@@ -106,7 +123,7 @@ function mount(options) {
         outputs: () => instance.getOutputs(),
         notifications: () => notifications,
         update: (next) => {
-            element = instance.updateView(host.createContext({ ...options, ...next, calls, getString: marked }));
+            element = instance.updateView(host.createContext({ ...options, ...next, inputs: { ...options.inputs, ...(next.inputs || {}) }, calls, getString: marked }));
 
             return element;
         },
@@ -148,9 +165,9 @@ check('and its strings come from the .resx', plain.props().strings.browse === 'r
  * `minimumCharacters` is clamped: zero would fire a search on every keystroke
  * including the empty one, which is a query per character against Dataverse.
  */
-check('a minimum of zero characters is clamped up', mount({ minimumCharacters: 0 }).props().minimumCharacters === 1, String(mount({ minimumCharacters: 0 }).props().minimumCharacters));
+check('a minimum of zero characters is clamped up', mount({ inputs: { minimumCharacters: 0 } }).props().minimumCharacters === 1, String(mount({ inputs: { minimumCharacters: 0 } }).props().minimumCharacters));
 
-check('allowBrowse defaults on rather than off', mount({ allowBrowse: null }).props().allowBrowse === true);
+check('allowBrowse defaults on rather than off', mount({ inputs: { allowBrowse: null } }).props().allowBrowse === true);
 
 /* --------------------------------------------------------- the array value */
 
@@ -273,9 +290,9 @@ check('and none at all where it cannot', mount({ hasNavigation: false }).props()
      */
     check('a host with Web API and metadata can search', (await plain.props().prepare()) === true);
 
-    check('one without Web API cannot', (await mount({ hasWebApi: false }).props().prepare()) === false);
+    check('one without Web API cannot', (await mount({ webAPI: false }).props().prepare()) === false);
 
-    check('nor one without entity metadata', (await mount({ hasMetadata: false }).props().prepare()) === false);
+    check('nor one without entity metadata', (await mount({ utils: false }).props().prepare()) === false);
 
     check('nor one whose column points at no table', (await mount({ targetMethod: 'absent', value: [] }).props().prepare()) === false);
 
@@ -285,7 +302,7 @@ check('and none at all where it cannot', mount({ hasNavigation: false }).props()
      */
     const searched = mount({});
     const found = await searched.props().search('Con');
-    const request = searched.calls().find((call) => call.startsWith('retrieveMultipleRecords'));
+    const request = searched.calls().find((call) => call.startsWith('webAPI.retrieveMultipleRecords'));
 
     check('a search returns candidates', found.length > 0, `${found.length} candidates`);
 
@@ -309,7 +326,7 @@ check('and none at all where it cannot', mount({ hasNavigation: false }).props()
 
     await quoted.props().search("O'Brien");
 
-    const quotedRequest = quoted.calls().find((call) => call.startsWith('retrieveMultipleRecords'));
+    const quotedRequest = quoted.calls().find((call) => call.startsWith('webAPI.retrieveMultipleRecords'));
 
     check(
         'a quote in the term is escaped rather than passed through',
@@ -317,11 +334,11 @@ check('and none at all where it cannot', mount({ hasNavigation: false }).props()
         quotedRequest || 'no request',
     );
 
-    const capped = mount({ maxResults: 5000 });
+    const capped = mount({ inputs: { maxResults: 5000 } });
 
     await capped.props().search('Con');
 
-    const cappedRequest = capped.calls().find((call) => call.startsWith('retrieveMultipleRecords'));
+    const cappedRequest = capped.calls().find((call) => call.startsWith('webAPI.retrieveMultipleRecords'));
 
     check(
         'a maxResults nobody should send is clamped down',
@@ -336,7 +353,7 @@ check('and none at all where it cannot', mount({ hasNavigation: false }).props()
     let rejected = false;
 
     try {
-        await mount({ searchFails: true }).props().search('Con');
+        await mount({ webApiFails: true }).props().search('Con');
     } catch {
         rejected = true;
     }
@@ -359,7 +376,7 @@ check('and none at all where it cannot', mount({ hasNavigation: false }).props()
 
     /* ------------------------------------------------------------ browsing */
 
-    const browsed = mount({ browseReturns: [{ id: 'a4', name: "O'Brien Holdings", entityType: 'account' }] });
+    const browsed = mount({ lookupPick: { id: 'a4', name: "O'Brien Holdings", entityType: 'account' } });
     const brought = await browsed.props().browse();
 
     check('the browse panel hands back what was picked', brought && brought.id === 'a4', JSON.stringify(brought));
@@ -367,12 +384,12 @@ check('and none at all where it cannot', mount({ hasNavigation: false }).props()
     check(
         'opening it at the view the maker configured on the form',
         browsed.calls().some((call) => call.includes('defaultViewId')),
-        browsed.calls().filter((c) => c.startsWith('lookupObjects')).join(' ') || 'no lookupObjects',
+        browsed.calls().filter((c) => c.startsWith('utils.lookupObjects')).join(' ') || 'no utils.lookupObjects',
     );
 
-    check('a cancelled panel is "picked nothing", not a failure', (await mount({ browseReturns: [] }).props().browse()) === null);
+    check('a cancelled panel is "picked nothing", not a failure', (await mount({}).props().browse()) === null);
 
-    check('and a host without the panel offers nothing rather than throwing', (await mount({ hasLookupObjects: false }).props().browse()) === null);
+    check('and a host without the panel offers nothing rather than throwing', (await mount({ lookupObjects: false }).props().browse()) === null);
 
     /* --------------------------------------------------- what destroy owes */
 

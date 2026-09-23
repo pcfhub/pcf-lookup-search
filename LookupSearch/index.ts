@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { IInputs, IOutputs } from './generated/ManifestTypes';
 import { ILookupStrings, IProps, LookupSearchControl } from './components/LookupSearchControl';
-import { buildQuery, Candidate, MatchMode, parseColumnList, QueryColumns, toCandidates } from './components/search';
+import { bareId, buildQuery, Candidate, MatchMode, parseColumnList, QueryColumns, toCandidates } from './components/search';
 
 type LookupValue = ComponentFramework.LookupValue;
 
@@ -64,7 +64,7 @@ export class LookupSearch implements ComponentFramework.ReactControl<IInputs, IO
 
         const parameter = context.parameters.value;
         const incoming = parameter.raw?.[0] ?? null;
-        const incomingId = incoming?.id ?? null;
+        const incomingId = incoming?.id ? bareId(incoming.id) : null;
 
         if (incomingId !== this.lastIncomingId) {
             this.lastIncomingId = incomingId;
@@ -305,9 +305,11 @@ export class LookupSearch implements ComponentFramework.ReactControl<IInputs, IO
             options.defaultViewId = viewId;
         }
 
-        const picked = await this.context.utils.lookupObjects(options);
+        const picked = (await this.context.utils.lookupObjects(options))?.[0];
 
-        return picked?.[0] ?? null;
+        // Braced and upper-case from the panel; bare and lower-case everywhere
+        // else. Written back in the form the column itself hands down.
+        return picked ? { ...picked, id: bareId(picked.id) } : null;
     }
 
     /**
