@@ -78,7 +78,34 @@ function Element(tagName) {
     this.childNodes = [];
     this.parentNode = null;
     this.attributes = {};
-    this.style = {};
+    /*
+     * `style` is a plain bag plus the three methods a control actually calls on
+     * it, because plain property assignment (`style.width = '320px'`) and
+     * `setProperty` have to land in the same place — a control commonly writes
+     * a CSS custom property one way and reads it back the other.
+     *
+     * Custom properties are the reason `setProperty` matters at all: `--x` is
+     * not a valid JavaScript property name, so `style['--x'] = …` is not how
+     * anyone writes it, and a control theming itself through custom properties
+     * cannot be checked without this. What it does *not* do is compute
+     * anything: there is no cascade here, no `getComputedStyle`, and a value
+     * set is exactly the value read back.
+     */
+    this.style = {
+        setProperty: function (name, value) {
+            this[name] = value === null || value === undefined ? '' : String(value);
+        },
+        getPropertyValue: function (name) {
+            return Object.prototype.hasOwnProperty.call(this, name) ? this[name] : '';
+        },
+        removeProperty: function (name) {
+            var previous = this.getPropertyValue(name);
+
+            delete this[name];
+
+            return previous;
+        },
+    };
     this.classList = new ClassList(this);
     this.listeners = {};
     this._text = '';
@@ -143,6 +170,55 @@ Object.defineProperty(Element.prototype, 'innerHTML', {
 
         this.childNodes = [];
         this._text = '';
+    },
+});
+
+/*
+ * `element.dataset`, backed by the same attribute map everything else reads.
+ *
+ * Not a separate bag: `dataset.index = '3'` and `getAttribute('data-index')`
+ * have to agree, because a control writes through one and a test — or the
+ * control's own later code — reads through the other. Keeping two stores in
+ * step is the bug this avoids by not having two.
+ *
+ * camelCase to `data-kebab-case` is the real mapping, so `dataset.rowIndex`
+ * becomes `data-row-index`. Deleting a key removes the attribute.
+ */
+Object.defineProperty(Element.prototype, 'dataset', {
+    get: function () {
+        var element = this;
+
+        var toAttribute = function (key) {
+            return 'data-' + String(key).replace(/[A-Z]/g, function (letter) {
+                return '-' + letter.toLowerCase();
+            });
+        };
+
+        return new Proxy(
+            {},
+            {
+                get: function (_target, key) {
+                    var name = toAttribute(key);
+
+                    return Object.prototype.hasOwnProperty.call(element.attributes, name)
+                        ? element.attributes[name]
+                        : undefined;
+                },
+                set: function (_target, key, value) {
+                    element.attributes[toAttribute(key)] = String(value);
+
+                    return true;
+                },
+                deleteProperty: function (_target, key) {
+                    delete element.attributes[toAttribute(key)];
+
+                    return true;
+                },
+                has: function (_target, key) {
+                    return Object.prototype.hasOwnProperty.call(element.attributes, toAttribute(key));
+                },
+            },
+        );
     },
 });
 
@@ -212,6 +288,37 @@ Element.prototype.removeAttribute = function (name) {
     delete this.attributes[name];
 };
 
+/*
+ * The handful of attributes a browser keeps in sync with a same-named property.
+ *
+ * `img.src = url` and `img.setAttribute('src', url)` are the same write in a
+ * browser, and they were not here: the first set a plain property that
+ * `getAttribute` could not see. That matters because of which assertions it
+ * breaks — a test written as "the control requested no tile", checking
+ * `getAttribute('src') === null`, passed whether or not the control had set
+ * one. It was reading a slot nothing ever wrote to, and reporting the absence
+ * as proof.
+ *
+ * The list is deliberately short. Reflection in a real DOM is per-element and
+ * full of exceptions — `value` on an input reflects only until a user types,
+ * `href` resolves to an absolute URL on read — and a stub that guessed at the
+ * general rule would be wrong in a way nothing here could reveal. These are the
+ * ones a code component sets as a property and a test reads as an attribute.
+ * `value` is NOT in the list: it is already special-cased below, because its
+ * real behaviour is the exception rather than the rule.
+ */
+['src', 'href', 'alt', 'title', 'type'].forEach(function (name) {
+    Object.defineProperty(Element.prototype, name, {
+        get: function () {
+            return this.getAttribute(name) === null ? '' : this.getAttribute(name);
+        },
+        set: function (value) {
+            this.setAttribute(name, value);
+        },
+        configurable: true,
+    });
+});
+
 Element.prototype.addEventListener = function (type, handler) {
     (this.listeners[type] = this.listeners[type] || []).push(handler);
 };
@@ -249,6 +356,23 @@ Element.prototype.click = function () {
 
 Element.prototype.focus = function () {
     module.exports.document.activeElement = this;
+};
+
+/*
+ * `select()`, and the document-wide selection it puts there.
+ *
+ * Modelled rather than stubbed away, because `document.execCommand('copy')`
+ * copies **the selection** — not an element, and not an argument. A control
+ * using the deprecated clipboard path appends an off-screen `<textarea>`, sets
+ * its value, and selects it, and forgetting that last step is a copy that
+ * silently puts nothing on the clipboard.
+ *
+ * So the selection is recorded here and an `execCommand` stub reads it, which
+ * makes that omission fail rather than pass. A `select()` that did nothing
+ * would let it through.
+ */
+Element.prototype.select = function () {
+    module.exports.document.selection = this.value === undefined ? this.textContent : this.value;
 };
 
 /*
@@ -355,7 +479,33 @@ var document = {
      * property changes first and the event announces it.
      */
     hidden: false,
+    /*
+     * What `Element.select()` last put here, and what an `execCommand('copy')`
+     * stub should read. `null` until something is selected, which is the state
+     * a control that forgot to select leaves it in.
+     */
+    selection: null,
     createElement: createElement,
+    /*
+     * SVG, and anything else with a namespace.
+     *
+     * The namespace is accepted and ignored, which is honest rather than lazy:
+     * nothing here renders, and every namespaced element behaves like any other
+     * for the purposes a control puts it to — attributes, children, classes,
+     * listeners. What it deliberately does *not* do is pretend to be an
+     * `SVGElement`: there is no `getBBox`, no `ownerSVGElement`, no
+     * `viewBox.baseVal`. A control reaching for those gets an honest
+     * `undefined` here rather than a fake that would let an assertion pass on
+     * geometry this file cannot compute.
+     *
+     * Worth having because drawing an icon in SVG is ordinary DOM work — the
+     * opposite of `innerHTML`, which this file refuses on purpose because it
+     * would need an HTML parser and because a control building markup from a
+     * string is a finding rather than a thing to accommodate.
+     */
+    createElementNS: function (_namespace, tagName) {
+        return createElement(tagName);
+    },
     createTextNode: function (text) {
         var node = createElement('#text');
         node.textContent = text;
@@ -369,6 +519,81 @@ var document = {
 
 document.body = createElement('body');
 document.documentElement.appendChild(document.body);
+
+/**
+ * A `FileReader`, because Node has `File` and `Blob` and not the one thing that
+ * turns either into a data URL.
+ *
+ * Only `readAsDataURL`, which is the method a control that keeps a file in a
+ * column actually uses — the other three would be stubs nobody drives.
+ *
+ * **It resolves on a later turn, exactly as the real one does**, which is the
+ * whole reason it is worth having rather than faking. A control that assumes
+ * the result is available when `readAsDataURL` returns works perfectly against
+ * a synchronous stub and reads `null` in a browser; a suite that asserts on the
+ * result therefore has to `await` a turn, and that is the honest shape.
+ */
+function FileReader() {
+    this.result = null;
+    this.error = null;
+    this.onload = null;
+    this.onerror = null;
+    this.onabort = null;
+    this._aborted = false;
+}
+
+FileReader.prototype.readAsDataURL = function (blob) {
+    var reader = this;
+
+    this._aborted = false;
+
+    Promise.resolve()
+        .then(function () {
+            return blob.arrayBuffer();
+        })
+        .then(function (buffer) {
+            // An aborted read reports nothing at all — see `abort` below.
+            if (reader._aborted) {
+                return;
+            }
+
+            reader.result =
+                'data:'
+                + (blob.type || 'application/octet-stream')
+                + ';base64,'
+                + Buffer.from(buffer).toString('base64');
+
+            if (reader.onload) {
+                reader.onload({ target: reader });
+            }
+        })
+        .catch(function (error) {
+            if (reader._aborted) {
+                return;
+            }
+
+            reader.error = error;
+
+            if (reader.onerror) {
+                reader.onerror({ target: reader });
+            }
+        });
+};
+
+/**
+ * Stops the pending read from ever calling back.
+ *
+ * This is what `destroy()` owes for a read still in flight: without it the
+ * callback fires against a control the platform has already thrown away, and
+ * writes into a container that is no longer on the page.
+ */
+FileReader.prototype.abort = function () {
+    this._aborted = true;
+
+    if (this.onabort) {
+        this.onabort({ target: this });
+    }
+};
 
 /**
  * Install the shim as this process's globals.
@@ -392,6 +617,7 @@ function install(global) {
     define('window', global);
     define('self', global);
     define('navigator', { userAgent: 'dev/dom.js', language: 'en-US' });
+    define('FileReader', FileReader);
 
     function define(name, value) {
         if (global[name] !== undefined) {
@@ -408,4 +634,10 @@ function install(global) {
     return document;
 }
 
-module.exports = { Element: Element, createElement: createElement, document: document, install: install };
+module.exports = {
+    Element: Element,
+    createElement: createElement,
+    document: document,
+    FileReader: FileReader,
+    install: install,
+};
