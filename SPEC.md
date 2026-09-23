@@ -158,14 +158,30 @@ form's Account:
 2. Is `updateView` called when the user changes the **parent** column on the
    form? `clear` depends on it; if not, `clear` goes, rather than being worked
    around.
-3. Does `ManyToOneRelationships` answer `ReferencingAttribute` as the logical
-   name (`parentcustomerid`) that `_<name>_value` expects? *Company Name* is a
-   Customer lookup, so its account half is one relationship among several; an
-   environment with a second lookup from contact to account should show the
-   ambiguous state — does it, and does `parentColumn: parentcustomerid`
-   settle it?
-4. Does the search with `and _parentcustomerid_value eq <id>` return only that
-   account's contacts, and does `clear` empty a contact of another account?
+3. ~~Does `ManyToOneRelationships` answer `ReferencingAttribute` as the
+   logical name that `_<name>_value` expects?~~ **Yes — measured 2026-09-23**,
+   Primary Contact on the Account main form, Parent value bound to Parent
+   Account. The environment has two lookups from contact to account, and the
+   field showed *"More than one column links this table to account. Set
+   Parent column to one of: msa_managingpartnerid, parentcustomerid."* —
+   logical names, sorted, the search box off. `msa_managingpartnerid` comes
+   with a Microsoft package, so **the ambiguous state is the ordinary case on
+   contact → account, not an edge case**: the docs should tell a maker to
+   expect it. The same run proved the refusal: `parentColumn` was first set to
+   `parentaccountid` (Account's own column, not a candidate) and was not
+   trusted. `parentColumn: parentcustomerid` then settled it (see 4).
+
+   It also half-answers 1: a *mapped* parent is read as mapped. The unmapped
+   shape is still inferred, from the unchanged search on forms that set no
+   parent.
+4. ~~Does the search with `and _parentcustomerid_value eq <id>` return only
+   that account's contacts?~~ **Yes — measured 2026-09-23**, same form, Parent
+   column `parentcustomerid`, Parent Account *PCF Test - Acme*: "Filtered by
+   PCF Test - Acme" under the box, typing `an` offered Ann Acme and Anya Acme
+   and not Andy Globex (a contact of another account whose name matches), and
+   the Browse button was gone. Still to watch: the same with Globex, a pick
+   surviving Save, and whether `clear` empties a contact of another account —
+   which is question 2.
 
 Searching and rendering results are verified on a real form. Everything below is
 what happens *after* somebody picks one, and none of it has been watched.

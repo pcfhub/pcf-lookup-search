@@ -55,6 +55,7 @@ somebody who works there. Place the control on the contact lookup, then set:
 | Property | Value |
 | --- | --- |
 | Parent value | *Account* (the opportunity's account column) |
+| Parent column | `parentcustomerid` |
 | Search columns | `emailaddress1` |
 | Secondary column | `emailaddress1` |
 | On parent change | Clear it |
@@ -64,10 +65,11 @@ field says *Filtered by Contoso* while you type. Changing the account empties a
 contact who does not work there and keeps one who does. With the account still
 empty, the search covers every contact, as the platform's own lookup would.
 
-A contact can point at an account in more than one way — *Company Name*, and
-any custom lookup to account you have added. When there are two, the field
-names both and asks for **Parent column**; set it to `parentcustomerid` for
-*Company Name*.
+**Expect to set Parent column here.** A contact usually points at an account
+in more than one way — *Company Name*, plus lookups that Microsoft solutions
+add, such as `msa_managingpartnerid`. When there are
+two, the field names both and the search stays off until you choose; set
+**Parent column** to `parentcustomerid` for *Company Name*.
 
 ## A product from the chosen category
 
