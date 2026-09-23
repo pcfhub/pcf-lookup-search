@@ -146,61 +146,54 @@ Moving to the template's rig found one real bug on the way in: a Browse pick
 was written back braced and upper-case, because the old host answered
 `lookupObjects` in the shape the control expected. Ids now go through `bareId`.
 
+## What a real form settled for 0.2.0
+
+Measured 2026-09-23 on the Account main form of the test environment, with the
+control on **Primary Contact** and **Parent value** bound to **Parent
+Account**. The Opportunity table is not installed there, so the form the docs
+use as the example was not the one tested; the relationship is the same one
+(contact's `parentcustomerid` to account).
+
+- **Relationships arrive as logical names, and contact → account is
+  ambiguous in the ordinary case.** The field showed *"More than one column
+  links this table to account. Set Parent column to one of:
+  msa_managingpartnerid, parentcustomerid."* — sorted, the search box off.
+  `msa_managingpartnerid` comes with a Microsoft package, so a maker should
+  expect to set Parent column here; `docs/examples.md` says so.
+- **A Parent column that is not a candidate is refused.** It was first set to
+  `parentaccountid` — Account's own column — and the message above stayed.
+- **The filter holds.** With `parentcustomerid` named: under *PCF Test - Acme*,
+  typing `an` offered Ann Acme and Anya Acme and not Andy Globex, whose name
+  also matches; under *PCF Test - Globex*, Andy only. "Filtered by …" under
+  the box, and no Browse button, both times.
+- **A parent changed on the form reaches `updateView` before any save.** The
+  hint read "Filtered by PCF Test - Globex" while the record was still
+  *Unsaved*.
+- **The write persists.** Ann picked from the list, saved, and still there
+  after a refresh — the first time a pick from this control has been watched
+  reaching the column, so the 0.1.x entry about it is settled too.
+- **`keep` keeps.** Changing the parent to Globex left Ann in place.
+- **`clear` clears only a record that no longer belongs.** With Ann selected,
+  clearing the parent left her, and choosing Globex then emptied her — the
+  check runs on the next parent that holds a record, which is the design.
+  *PCF Test - Mismatch* (parent Acme, contact Andy Globex) kept Andy on load.
+  Emptying the parent never cleared the contact, and Browse came back.
+
 ## Not verified
 
-**0.2.0 — none of the parent filtering has been on a form.** The probe to run
-before tagging, on a Primary Contact lookup with **Parent value** mapped to the
-form's Account:
-
-1. Does an **unmapped** `parentValue` arrive as `type: null`, `raw: null` on
-   this control, as it did on address-autocomplete? (The whole "no change for
-   existing forms" claim rests on it.)
-2. Is `updateView` called when the user changes the **parent** column on the
-   form? `clear` depends on it; if not, `clear` goes, rather than being worked
-   around.
-3. ~~Does `ManyToOneRelationships` answer `ReferencingAttribute` as the
-   logical name that `_<name>_value` expects?~~ **Yes — measured 2026-09-23**,
-   Primary Contact on the Account main form, Parent value bound to Parent
-   Account. The environment has two lookups from contact to account, and the
-   field showed *"More than one column links this table to account. Set
-   Parent column to one of: msa_managingpartnerid, parentcustomerid."* —
-   logical names, sorted, the search box off. `msa_managingpartnerid` comes
-   with a Microsoft package, so **the ambiguous state is the ordinary case on
-   contact → account, not an edge case**: the docs should tell a maker to
-   expect it. The same run proved the refusal: `parentColumn` was first set to
-   `parentaccountid` (Account's own column, not a candidate) and was not
-   trusted. `parentColumn: parentcustomerid` then settled it (see 4).
-
-   It also half-answers 1: a *mapped* parent is read as mapped. The unmapped
-   shape is still inferred, from the unchanged search on forms that set no
-   parent.
-4. ~~Does the search with `and _parentcustomerid_value eq <id>` return only
-   that account's contacts?~~ **Yes — measured 2026-09-23**, same form, Parent
-   column `parentcustomerid`, Parent Account *PCF Test - Acme*: "Filtered by
-   PCF Test - Acme" under the box, typing `an` offered Ann Acme and Anya Acme
-   and not Andy Globex (a contact of another account whose name matches), and
-   the Browse button was gone. Switched to *PCF Test - Globex*, it offered
-   Andy Globex only. Still to watch: a pick surviving Save, and whether
-   `clear` empties a contact of another account.
-
-   **Evidence for question 2 from the same run:** with the record still
-   *Unsaved* after the parent changed to Globex, the hint already read
-   "Filtered by PCF Test - Globex". The hint is built from the parent read in
-   `updateView`, so the platform does call `updateView` for a change to the
-   bound parent column made on the form, before any save. What is left of
-   question 2 is the check query and the clear themselves.
-
-Searching and rendering results are verified on a real form. Everything below is
-what happens *after* somebody picks one, and none of it has been watched.
-
-- **The write reaching the column.** `getOutputs` returns a one-element array;
-  that a form persists it, and that `[]` clears it, is untested. Selecting from
-  the list and saving the record is the whole test.
+- **The unmapped shape on this control.** A form with no Parent value mapped
+  searching exactly as 0.1.x did is inferred from address-autocomplete's
+  measurement (`type: null`, `raw: null`) and from the suite's byte-for-byte
+  comparison, not watched here. One look at an existing 0.1.1 placement after
+  the upgrade settles it.
+- **A cleared contact surviving Save.** `clear` emptying the field was watched;
+  saving the record afterwards and finding the column empty was not.
 - **The record link on the chip.** The chip itself has been seen on a form —
   rendered from a value the platform supplied — but `navigation.openForm` behind
   the record name has never been clicked.
 - **Browse.** `lookupObjects` opening at all, and opening on the `defaultViewId`
-  taken from `getViewId()`.
+  taken from `getViewId()`. Seen *hidden* while filtered and back once the
+  parent was emptied; never clicked.
 - **The demo presets' bound value shape.** `"value": [{ id, name, entityType }]`
   assumes the harness builds a usable property from an array of plain objects.
   If it does not, the default preset renders as empty and the demo says nothing
@@ -209,10 +202,9 @@ what happens *after* somebody picks one, and none of it has been watched.
   string filters, and `encodeURIComponent` turns a typed `%` into `%25`. Whether
   that arrives as a literal percent or as a wildcard is untested; a user typing
   `50%` is the case that would show it.
-- **Choosing from Fluent's `Combobox`.** The popup now demonstrably opens with
-  real options on a form, so `freeform` with a controlled `value` is settled —
-  but nothing has been *picked* from it here. Selection, the popup's keyboard
-  behaviour, and focus returning to the field afterwards are all untested.
+- **The `Combobox` by keyboard.** A pick with the pointer is now settled (see
+  above). Choosing with the arrow keys and Enter, and focus returning to the
+  field afterwards, are not.
 
 ## What the template assumed
 
