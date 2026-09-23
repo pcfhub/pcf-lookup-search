@@ -7,7 +7,7 @@
   -->
   <control namespace="PCFHub"
            constructor="LookupSearch"
-           version="0.1.1"
+           version="0.2.0"
            display-name-key="LookupSearch_Name"
            description-key="LookupSearch_Desc"
            control-type="virtual">

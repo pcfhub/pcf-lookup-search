@@ -47,6 +47,39 @@ that fewer, more selective queries are sent — three characters here rather tha
 two.
 :::
 
+## A primary contact from the account on the form
+
+An opportunity's **Account** is chosen first, and its **Contact** should be
+somebody who works there. Place the control on the contact lookup, then set:
+
+| Property | Value |
+| --- | --- |
+| Parent value | *Account* (the opportunity's account column) |
+| Search columns | `emailaddress1` |
+| Secondary column | `emailaddress1` |
+| On parent change | Clear it |
+
+The search offers only contacts whose *Company Name* is that account, and the
+field says *Filtered by Contoso* while you type. Changing the account empties a
+contact who does not work there and keeps one who does. With the account still
+empty, the search covers every contact, as the platform's own lookup would.
+
+A contact can point at an account in more than one way — *Company Name*, and
+any custom lookup to account you have added. When there are two, the field
+names both and asks for **Parent column**; set it to `parentcustomerid` for
+*Company Name*.
+
+## A product from the chosen category
+
+A custom **Category** table with a **Product** table beneath it, each product
+holding a *Category* lookup. On a form with both, place the control on the
+product lookup and map **Parent value** to the category. Nothing else is
+needed: one lookup links the two tables, so the control finds it.
+
+Leave **On parent change** at *Keep it* if a product may legitimately sit under
+more than one category over time and you would rather a user notice the
+mismatch than lose the value.
+
 ## A read-only reference on a locked form
 
 No configuration of this control makes it read-only — the form does. When the

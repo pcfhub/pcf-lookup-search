@@ -23,12 +23,27 @@ and **Browse** is left available.
 costs a query to produce a list nobody can use. Lower it to 1 if the table is
 small.
 
-## Can I filter the results — active records only, or by another field on the form?
+## Can I filter the results by another field on the form?
 
-Not from this control. See [Limitations](limitations.md): the framework's Web
-API takes no such context, and its `lookupObjects` has no filter option. A view
-with the filter built in, set on the column, will at least narrow what
+By another **lookup**, yes, from 0.2.0: map **Parent value** to it, and the
+search offers only records related to the parent. See
+[Model-driven apps](model-driven.md#filtering-by-a-parent-column). A Choice
+column or a fixed condition such as *active records only* is not supported;
+for those, a view with the filter built in, set on the column, narrows what
 **Browse** shows.
+
+## Why did Browse disappear?
+
+Because a parent is filtering the search. The platform panel Browse opens
+cannot be narrowed from a code component, so it would list every record the
+search is holding back. Browse comes back while the parent is empty.
+
+## The field says more than one column links the tables. What do I set?
+
+Set **Parent column** to one of the names the message lists — the lookup on the
+searched table that points at the parent you mapped. A contact, for instance,
+can point at an account both as its company and through a custom column, and
+the control will not guess which one you mean.
 
 ## Can it search a customer or regarding lookup?
 

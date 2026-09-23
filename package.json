@@ -1,6 +1,6 @@
 {
   "name": "pcf-lookup-search",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "A lookup column as a type-ahead search over the target table.",
   "license": "MIT",
   "private": true,

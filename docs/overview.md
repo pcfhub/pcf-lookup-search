@@ -24,6 +24,11 @@ and writing the chosen record straight back to the column.
 - **It shows a second line.** A list of eleven people called *J. Martin* is not
   a choice. Point `Secondary column` at the column that tells them apart and it
   appears under each result.
+- **It can follow another lookup on the form.** Map *Parent value* to the
+  form's Account and the contact search offers only that account's contacts —
+  the cascading lookup that otherwise takes an `addPreSearch` script. It finds
+  the linking column from the table's relationships, and asks rather than
+  guesses when there are two.
 - **It does not replace the platform panel, it keeps it.** The Browse button
   opens the environment's own lookup dialog, on the view the maker configured
   for the column. When the search box cannot find something, the way out is one

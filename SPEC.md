@@ -114,7 +114,58 @@ image is worth four separate verifications — the query Dataverse accepts, the
 reaching portalled content, and the dropdown sized to the whole field rather than
 to the Combobox inside it.
 
+## 0.2.0: a parent lookup
+
+Chosen from outside and inside at once: filtering a lookup by another column
+on the form is one of the most repeated model-driven questions, answered with
+`addPreSearch` script or the form designer's single-relationship "filter by
+related rows" — and "No filtering beyond the columns you name" was this
+repository's own limitation, written as a refusal.
+
+The decisions, each asserted and mutation-tested in `dev/smoke.js`:
+
+- **A second bound `Lookup.Simple`, optional.** The column picker it renders
+  is the feature. Unmapped is `type === null` (address-autocomplete's
+  measurement, not this repository's — see below); an unmapped parent sends the
+  0.1.x query byte for byte, and the suite compares the two strings.
+- **The linking column is read, not configured.** `ManyToOneRelationships` of
+  the searched table, filtered on `ReferencedEntity`. One candidate filters; two
+  or more is `ambiguous` and `parentColumn` must name one *of them*; none is
+  `none`. `components/parent.ts`, pure.
+- **Every state that cannot filter turns the search off.** Unreadable
+  relationships (offline, 403, no `context.page`) included. Widening would
+  offer exactly what the maker meant to exclude.
+- **Browse is hidden while filtered**, because `lookupObjects` has no
+  `filters`. Decided without a probe: the typings and Microsoft's reference
+  agree the option does not exist, and an untyped option the platform happened
+  to honour would be a behaviour nothing promises to keep.
+- **`clear` asks first**, with one `maxPageSize: 1` query, and keeps the value
+  on any failure, on the first pass, and when the parent is emptied.
+
+Moving to the template's rig found one real bug on the way in: a Browse pick
+was written back braced and upper-case, because the old host answered
+`lookupObjects` in the shape the control expected. Ids now go through `bareId`.
+
 ## Not verified
+
+**0.2.0 — none of the parent filtering has been on a form.** The probe to run
+before tagging, on a Primary Contact lookup with **Parent value** mapped to the
+form's Account:
+
+1. Does an **unmapped** `parentValue` arrive as `type: null`, `raw: null` on
+   this control, as it did on address-autocomplete? (The whole "no change for
+   existing forms" claim rests on it.)
+2. Is `updateView` called when the user changes the **parent** column on the
+   form? `clear` depends on it; if not, `clear` goes, rather than being worked
+   around.
+3. Does `ManyToOneRelationships` answer `ReferencingAttribute` as the logical
+   name (`parentcustomerid`) that `_<name>_value` expects? *Company Name* is a
+   Customer lookup, so its account half is one relationship among several; an
+   environment with a second lookup from contact to account should show the
+   ambiguous state — does it, and does `parentColumn: parentcustomerid`
+   settle it?
+4. Does the search with `and _parentcustomerid_value eq <id>` return only that
+   account's contacts, and does `clear` empty a contact of another account?
 
 Searching and rendering results are verified on a real form. Everything below is
 what happens *after* somebody picks one, and none of it has been watched.

@@ -59,3 +59,18 @@ formula or a stale configuration should not be able to send an unbounded query.
 search box is disabled and says so; the bound value still renders, and `Browse`
 still works if `Utility` is present.
 
+**`parentValue` is read, never written.** It is a second bound `Lookup.Simple`,
+optional and off until mapped. `getOutputs` never returns it, so the control
+cannot change the parent. Left unmapped it arrives with `type: null`, which is
+how the control tells *no parent configured* from *parent configured and
+empty*. The first searches exactly as before 0.2.0; the second filters nothing
+until the parent holds a record.
+
+**The filter is `_<column>_value eq <parent id>`**, added outside the match
+group, so every searched column is narrowed. `<column>` is the searched
+table's `ManyToOneRelationships` entry whose `ReferencedEntity` is the parent's
+table; `parentColumn` chooses between two or more, and must name one of them.
+
+**`onParentChange` is `keep` or `clear`**, default `keep`. `clear` checks the
+chosen record against the new parent with one query and empties it only when no
+row comes back.
