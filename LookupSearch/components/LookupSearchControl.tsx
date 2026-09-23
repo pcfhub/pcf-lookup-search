@@ -7,6 +7,7 @@ import {
     webLightTheme,
 } from '@fluentui/react-components';
 import { Candidate, describeError } from './search';
+import { allowsBrowse, allowsSearch, ParentState } from './parent';
 
 type LookupValue = ComponentFramework.LookupValue;
 
@@ -22,6 +23,14 @@ export interface ILookupStrings {
     searchUnavailable: string;
     noTarget: string;
     searchFailed: string;
+    /** Carries a `{0}` for the parent record's name. */
+    filteredBy: string;
+    /** Carries `{0}` for the parent's table and `{1}` for the candidate columns. */
+    parentAmbiguous: string;
+    /** Carries a `{0}` for the parent's table. */
+    parentNone: string;
+    /** Carries a `{0}` for the parent's table. */
+    parentUnavailable: string;
 }
 
 export interface IProps {
@@ -43,6 +52,14 @@ export interface IProps {
     prepare: () => Promise<boolean>;
     search: (term: string) => Promise<Candidate[]>;
     browse: () => Promise<LookupValue | null>;
+    /**
+     * Changes whenever the parent that narrows the search does, and is empty
+     * when nothing narrows it — no parent mapped, or the parent is empty. The
+     * effect below keys on it, because `parent` is a fresh closure per render.
+     */
+    parentKey: string;
+    /** What the parent allows — see `parent.ts`. Called only for a non-empty key. */
+    parent: () => Promise<ParentState>;
     /** null where the host offers no navigation, which makes the chip static. */
     openRecord: ((value: LookupValue) => void) | null;
     onChange: (next: LookupValue | null) => void;
@@ -53,7 +70,8 @@ const DEBOUNCE_MS = 300;
 
 type Status = 'idle' | 'typeMore' | 'searching' | 'noMatches' | 'results';
 
-const format = (template: string, value: string): string => template.split('{0}').join(value);
+const format = (template: string, value: string, second = ''): string =>
+    template.split('{0}').join(value).split('{1}').join(second);
 
 /*
  * A form can carry two of these — a primary contact and a parent account is the
@@ -153,6 +171,14 @@ export function LookupSearchControl(props: IProps): React.ReactElement | null {
     /** null while the host is still being asked whether it can search. */
     const [canSearch, setCanSearch] = React.useState<boolean | null>(null);
 
+    /**
+     * What the parent allows; null while its relationships are being read.
+     * Nothing narrows an empty key, so that case is settled without asking.
+     */
+    const [parent, setParent] = React.useState<ParentState | null>(
+        props.parentKey === '' ? { kind: 'off' } : null,
+    );
+
     // Resync when the *platform* hands down a genuinely different record, so a
     // form-driven change still wins over local state. Keyed on the record's id
     // rather than the object, which is new on every pass.
@@ -199,6 +225,41 @@ export function LookupSearchControl(props: IProps): React.ReactElement | null {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [props.entityType]);
 
+    // Re-read what the parent allows whenever it changes. The list is cleared
+    // with it: rows found under the old parent are not choosable under the new.
+    React.useEffect(() => {
+        setCandidates([]);
+        setOpen(false);
+
+        if (props.parentKey === '') {
+            setParent({ kind: 'off' });
+            return;
+        }
+
+        let live = true;
+        setParent(null);
+
+        props.parent().then(
+            (state) => {
+                if (live) {
+                    setParent(state);
+                }
+            },
+            () => {
+                if (live) {
+                    setParent({ kind: 'unavailable', table: '' });
+                }
+            },
+        );
+
+        return () => {
+            live = false;
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [props.parentKey]);
+
+    const parentAllowsSearch = parent !== null && allowsSearch(parent);
+
     // The search itself: debounced, and guarded by the effect's own lifetime.
     //
     // `live` is what makes a slow answer harmless. Each keystroke re-runs this
@@ -208,7 +269,7 @@ export function LookupSearchControl(props: IProps): React.ReactElement | null {
     // promise with nothing to abort, so retiring the *handler* is the only
     // cancellation available.
     React.useEffect(() => {
-        if (canSearch !== true || props.disabled || selected !== null) {
+        if (canSearch !== true || !parentAllowsSearch || props.disabled || selected !== null) {
             return;
         }
 
@@ -279,7 +340,7 @@ export function LookupSearchControl(props: IProps): React.ReactElement | null {
             window.clearTimeout(timer);
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [query, canSearch, selected, props.disabled, props.minimumCharacters]);
+    }, [query, canSearch, parentAllowsSearch, props.parentKey, selected, props.disabled, props.minimumCharacters]);
 
     const commit = (next: LookupValue | null): void => {
         restoreFocus.current = next === null;
@@ -338,7 +399,7 @@ export function LookupSearchControl(props: IProps): React.ReactElement | null {
      * dropdown open to put it in.
      */
     const popupMessage = (): string => {
-        if (selected !== null || canSearch !== true) {
+        if (selected !== null || canSearch !== true || !parentAllowsSearch) {
             return '';
         }
 
@@ -359,13 +420,36 @@ export function LookupSearchControl(props: IProps): React.ReactElement | null {
             return strings.noTarget;
         }
 
+        // A parent the control cannot filter by is a configuration problem the
+        // maker has to fix, so it is said whether or not a record is chosen.
+        switch (parent?.kind) {
+            case 'ambiguous':
+                return format(strings.parentAmbiguous, parent.table, parent.candidates.join(', '));
+            case 'none':
+                return format(strings.parentNone, parent.table);
+            case 'unavailable':
+                return format(strings.parentUnavailable, parent.table);
+            default:
+                break;
+        }
+
         return selected === null && canSearch === false ? strings.searchUnavailable : '';
     };
 
+    // Said only while choosing: once a record is chosen the filter has nothing
+    // left to explain.
+    const hint = parent?.kind === 'filtered' && selected === null && canSearch === true
+        ? format(strings.filteredBy, parent.name)
+        : '';
+
     const popupText = popupMessage();
     const invalid = props.errorMessage !== null || failure !== null;
-    const searchable = canSearch === true && !props.disabled;
-    const browsable = props.allowBrowse && props.entityType !== '' && !props.disabled;
+    const searchable = canSearch === true && parentAllowsSearch && !props.disabled;
+    // Hidden while anything narrows the search, and while that is still being
+    // worked out: the panel cannot be narrowed, so it would offer every record
+    // the search withholds.
+    const browsable = props.allowBrowse && props.entityType !== '' && !props.disabled
+        && parent !== null && allowsBrowse(parent);
     const name = selected?.name ?? '';
 
     const field = [
@@ -508,6 +592,10 @@ export function LookupSearchControl(props: IProps): React.ReactElement | null {
             >
                 {popupText}
             </p>
+
+            {hint !== '' && (
+                <p className="LookupSearch-message">{hint}</p>
+            )}
 
             {fieldMessage() !== '' && (
                 <p className="LookupSearch-message">{fieldMessage()}</p>

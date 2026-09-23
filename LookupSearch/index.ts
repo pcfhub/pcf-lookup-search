@@ -1,9 +1,35 @@
 import * as React from 'react';
 import { IInputs, IOutputs } from './generated/ManifestTypes';
 import { ILookupStrings, IProps, LookupSearchControl } from './components/LookupSearchControl';
-import { bareId, buildQuery, Candidate, MatchMode, parseColumnList, QueryColumns, toCandidates } from './components/search';
+import {
+    bareId,
+    buildMembershipQuery,
+    buildQuery,
+    Candidate,
+    MatchMode,
+    parseColumnList,
+    QueryColumns,
+    toCandidates,
+} from './components/search';
+import {
+    allowsBrowse,
+    allowsSearch,
+    needsRelationships,
+    ParentState,
+    readRelationships,
+    Relationship,
+    resolveParent,
+} from './components/parent';
 
 type LookupValue = ComponentFramework.LookupValue;
+
+/** The parent column as one pass of `updateView` reads it. */
+interface ParentReading {
+    mapped: boolean;
+    table: string;
+    id: string | null;
+    name: string;
+}
 
 /**
  * A virtual (React) field control bound to a `Lookup.Simple` column.
@@ -11,13 +37,13 @@ type LookupValue = ComponentFramework.LookupValue;
  * Three things make this different from the template it started as, and all
  * three are about the platform rather than about React:
  *
- *  - **The value is an array.** A lookup's `raw` is `LookupValue[]`, empty
+ *  — **The value is an array.** A lookup's `raw` is `LookupValue[]`, empty
  *    rather than null when the column has no value, and it is cleared by
  *    writing `[]` back. `getOutputs` below is the only place that matters.
- *  - **The control does not know its own target table.** It asks the property
+ *  — **The control does not know its own target table.** It asks the property
  *    for it, and then asks the platform which of that table's columns is the
  *    name — two calls that exist only in a model-driven app.
- *  - **Everything it reads is asynchronous**, so the async state lives in the
+ *  — **Everything it reads is asynchronous**, so the async state lives in the
  *    React component and this class exposes promises to it. A virtual control
  *    has no way to make the platform re-render on its own; calling
  *    `notifyOutputChanged` to force one would push an unchanged value at the
@@ -50,6 +76,26 @@ export class LookupSearch implements ComponentFramework.ReactControl<IInputs, IO
      */
     private columns: { target: string; promise: Promise<Pick<QueryColumns, 'primaryId' | 'primaryName'> | null> } | null = null;
 
+    /** The parent column as this pass reads it — see `readParent`. */
+    private parent: ParentReading = { mapped: false, table: '', id: null, name: '' };
+
+    /**
+     * The parent id the last pass saw, and whether there has been a pass at
+     * all. The first pass is the form loading, not the parent changing, so it
+     * is never a reason to clear anything.
+     */
+    private lastParentId: string | null = null;
+    private seenParent = false;
+
+    /**
+     * The searched table's many-to-one relationships, per table, kept as the
+     * promise so a burst of typing shares one metadata read.
+     */
+    private relationships = new Map<string, Promise<Relationship[] | null>>();
+
+    /** What the current parent allows, keyed like `parentKey`. */
+    private parentState: { key: string; promise: Promise<ParentState> } | null = null;
+
     public init(
         context: ComponentFramework.Context<IInputs>,
         notifyOutputChanged: () => void,
@@ -72,6 +118,7 @@ export class LookupSearch implements ComponentFramework.ReactControl<IInputs, IO
         }
 
         this.target = this.resolveTarget(parameter);
+        this.readParent(context);
 
         // Field-level security is NOT the form's read-only state, and
         // conflating them is a real information bug: a user denied read access
@@ -109,6 +156,8 @@ export class LookupSearch implements ComponentFramework.ReactControl<IInputs, IO
             prepare: (): Promise<boolean> => this.prepare(),
             search: (term: string): Promise<Candidate[]> => this.search(term),
             browse: (): Promise<LookupValue | null> => this.browse(),
+            parentKey: this.parentKey(),
+            parent: (): Promise<ParentState> => this.currentParent(),
             // The platform's own lookup renders the selected record as a link
             // to it. `openForm` needs no <uses-feature>, so this costs the
             // maker no extra permission — but it is still absent on hosts
@@ -169,6 +218,175 @@ export class LookupSearch implements ComponentFramework.ReactControl<IInputs, IO
         }
 
         return parameter.raw?.[0]?.entityType ?? '';
+    }
+
+    /**
+     * The parent column, re-read on every pass.
+     *
+     * **Mapped is decided by `type`, not by `raw`.** A parent picker the maker
+     * left empty arrives as `{ type: null, raw: null, ... }` — measured on
+     * pcf-address-autocomplete-azure, 2026-09-13 — while a mapped, empty lookup
+     * has a type and `raw: []`. The generated `IInputs` types the property as
+     * always there, which a form saved before 0.2.0 and PCFHub's demo harness
+     * can both contradict, so its absence is read as unmapped too.
+     */
+    private readParent(context: ComponentFramework.Context<IInputs>): void {
+        const parameter = context.parameters.parentValue as ComponentFramework.PropertyTypes.LookupProperty | undefined;
+        const mapped = parameter !== undefined && parameter !== null
+            && parameter.type !== null && Array.isArray(parameter.raw);
+        const first = mapped ? parameter.raw[0] : undefined;
+
+        this.parent = {
+            mapped,
+            table: mapped ? this.resolveTarget(parameter) : '',
+            id: first?.id ? bareId(first.id) : null,
+            name: first?.name ?? '',
+        };
+
+        const id = mapped ? this.parent.id : null;
+
+        if (this.seenParent && id !== this.lastParentId && id !== null
+            && context.parameters.onParentChange?.raw === 'clear') {
+            void this.clearIfOrphaned(id);
+        }
+
+        this.seenParent = true;
+        this.lastParentId = id;
+    }
+
+    /** Empty when nothing narrows the search; otherwise changes with anything that could. */
+    private parentKey(): string {
+        const { mapped, table, id } = this.parent;
+
+        if (!needsRelationships(mapped, id)) {
+            return '';
+        }
+
+        const named = (this.context.parameters.parentColumn?.raw ?? '').trim().toLowerCase();
+
+        return [this.target, table, id, named].join('|');
+    }
+
+    private currentParent(): Promise<ParentState> {
+        const key = this.parentKey();
+
+        if (key === '') {
+            return Promise.resolve({ kind: 'off' });
+        }
+
+        if (!this.parentState || this.parentState.key !== key) {
+            const reading = this.parent;
+            const parentColumn = this.context.parameters.parentColumn?.raw ?? null;
+
+            this.parentState = {
+                key,
+                promise: this.relationshipsOf(this.target).then((relationships) =>
+                    resolveParent({ ...reading, relationships, parentColumn })),
+            };
+        }
+
+        return this.parentState.promise;
+    }
+
+    private relationshipsOf(table: string): Promise<Relationship[] | null> {
+        let pending = this.relationships.get(table);
+
+        if (!pending) {
+            pending = this.loadRelationships(table);
+            this.relationships.set(table, pending);
+        }
+
+        return pending;
+    }
+
+    /**
+     * The searched table's lookup columns and the tables they point at.
+     *
+     * A same-origin `fetch` from `page.getClientUrl()`, the way `pcf-tag-list`
+     * and `pcf-chart-view` read theirs: `getEntityMetadata` answers about
+     * attributes, not relationships. `context.page` is not in the typings and
+     * is read defensively; without it this resolves null, which the caller
+     * shows as "could not be read" rather than searching unfiltered.
+     */
+    private async loadRelationships(table: string): Promise<Relationship[] | null> {
+        const clientUrl = this.clientUrl();
+
+        if (clientUrl === null || typeof fetch !== 'function' || !table) {
+            return null;
+        }
+
+        try {
+            const response = await fetch(
+                `${clientUrl}/api/data/v9.2/EntityDefinitions(LogicalName='${table}')/ManyToOneRelationships`
+                + '?$select=ReferencingAttribute,ReferencedEntity',
+                {
+                    method: 'GET',
+                    headers: { Accept: 'application/json', 'OData-MaxVersion': '4.0', 'OData-Version': '4.0' },
+                    credentials: 'same-origin',
+                },
+            );
+
+            if (!response.ok) {
+                return null;
+            }
+
+            return readRelationships(((await response.json()) as { value?: unknown } | null)?.value);
+        } catch {
+            return null;
+        }
+    }
+
+    private clientUrl(): string | null {
+        try {
+            const page = (this.context as unknown as { page?: { getClientUrl?: () => string } }).page;
+            const url = page?.getClientUrl?.();
+
+            return typeof url === 'string' && url !== '' ? url.replace(/\/+$/, '') : null;
+        } catch {
+            // Canvas publishes `getClientUrl` and throws from it (pcf-data-table,
+            // measured 2026-09-22).
+            return null;
+        }
+    }
+
+    /**
+     * `onParentChange = clear`: empty the chosen record if it does not belong
+     * to the new parent.
+     *
+     * Asked rather than assumed, so a record that still belongs — a parent
+     * changed and changed back — is left alone. So is anything the check could
+     * not settle: clearing a value because the network failed is worse than
+     * keeping a stale one.
+     */
+    private async clearIfOrphaned(parentId: string): Promise<void> {
+        const chosen = this.selected;
+
+        if (!chosen?.id || typeof this.context.webAPI?.retrieveMultipleRecords !== 'function') {
+            return;
+        }
+
+        try {
+            const [state, metadata] = await Promise.all([this.currentParent(), this.metadataColumns()]);
+
+            if (state.kind !== 'filtered' || !metadata) {
+                return;
+            }
+
+            const answer = await this.context.webAPI.retrieveMultipleRecords(
+                this.target,
+                buildMembershipQuery(metadata.primaryId, chosen.id, state),
+                1,
+            );
+
+            // Settled only if nothing moved while the check was in flight: a
+            // second parent change, or the user choosing again.
+            if (answer.entities.length === 0 && this.lastParentId === parentId && this.selected === chosen) {
+                this.selected = null;
+                this.notifyOutputChanged();
+            }
+        } catch {
+            // Keep the value — see above.
+        }
     }
 
     /** The view the maker configured on the form, for the Browse panel. */
@@ -247,9 +465,11 @@ export class LookupSearch implements ComponentFramework.ReactControl<IInputs, IO
      * its message on screen.
      */
     private async search(term: string): Promise<Candidate[]> {
-        const metadata = await this.metadataColumns();
+        const [metadata, parent] = await Promise.all([this.metadataColumns(), this.currentParent()]);
 
-        if (!metadata) {
+        // The component does not search in these states; this is the second
+        // lock on the same door, for a caller that does not ask first.
+        if (!metadata || !allowsSearch(parent)) {
             return [];
         }
 
@@ -269,7 +489,7 @@ export class LookupSearch implements ComponentFramework.ReactControl<IInputs, IO
 
         const response = await this.context.webAPI.retrieveMultipleRecords(
             this.target,
-            buildQuery(columns, matchMode, term),
+            buildQuery(columns, matchMode, term, parent.kind === 'filtered' ? parent : null),
             maxResults,
         );
 
@@ -291,6 +511,12 @@ export class LookupSearch implements ComponentFramework.ReactControl<IInputs, IO
      */
     private async browse(): Promise<LookupValue | null> {
         if (!this.target || typeof this.context.utils?.lookupObjects !== 'function') {
+            return null;
+        }
+
+        // `LookupOptions` carries no `filters`, so the panel cannot be narrowed
+        // to the parent. The component hides the button; this refuses too.
+        if (!allowsBrowse(await this.currentParent())) {
             return null;
         }
 
@@ -344,6 +570,10 @@ export class LookupSearch implements ComponentFramework.ReactControl<IInputs, IO
             searchUnavailable: get('LookupSearch_SearchUnavailable'),
             noTarget: get('LookupSearch_NoTarget'),
             searchFailed: get('LookupSearch_SearchFailed'),
+            filteredBy: get('LookupSearch_FilteredBy'),
+            parentAmbiguous: get('LookupSearch_ParentAmbiguous'),
+            parentNone: get('LookupSearch_ParentNone'),
+            parentUnavailable: get('LookupSearch_ParentUnavailable'),
         };
     }
 }

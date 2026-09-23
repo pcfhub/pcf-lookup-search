@@ -38,16 +38,8 @@
     -->
 
     <!--
-      ONE bound property, and that is a rule rather than a simplification.
-
-      A field control binds its *first* bound property to the column it is
-      placed on, and renders every additional bound property as its own column
-      picker in the configuration pane — so a second lookup here would ask the
-      maker to choose a second column for a control that attaches to exactly
-      one. `required="false"` does not suppress it. Microsoft's own
-      LookupSimpleControl sample declares two and pays that cost deliberately,
-      to demonstrate the binding; a control people put on production forms
-      should not.
+      The column the control attaches to. It is declared FIRST because a field
+      control binds its first bound property to the column it is placed on.
 
       `Lookup.Simple` is model-driven only. There is no canvas story for this
       control at all, which is why docs/canvas.md is not in this repository.
@@ -62,6 +54,31 @@
               of-type="Lookup.Simple"
               usage="bound"
               required="true" />
+
+    <!--
+      The parent a cascading lookup is filtered by: Account for a Primary
+      Contact, Category for a Product.
+
+      Every bound property after the first renders as its own column picker in
+      the configuration pane, which is a cost for a control that attaches to
+      one column and is the whole feature here — the maker picks the parent
+      there. 0.1.x declared no second bound property for exactly that reason.
+
+      Optional, and off until mapped. A picker the maker leaves empty arrives
+      with `type: null` (measured on pcf-address-autocomplete-azure,
+      2026-09-13), which is how the control tells "no parent configured" from
+      "parent configured and empty" — an existing form upgrading to 0.2.0 has
+      the first and searches exactly as before.
+
+      Read-only in effect: getOutputs never emits it, so the control cannot
+      change the parent however it is configured.
+    -->
+    <property name="parentValue"
+              display-name-key="parentValue_Name"
+              description-key="parentValue_Desc"
+              of-type="Lookup.Simple"
+              usage="bound"
+              required="false" />
 
     <property name="placeholder"
               display-name-key="placeholder_Name"
@@ -138,6 +155,38 @@
               required="false"
               default-value="true" />
 
+    <!--
+      Which of the target table's lookup columns points at the parent, for the
+      case the metadata cannot settle: two relationships between the same pair
+      of tables (a contact's Company Name and its Managing Partner both point
+      at account). With one relationship this stays empty. A name that is not
+      one of the candidates is refused rather than trusted, so it cannot widen
+      the search.
+    -->
+    <property name="parentColumn"
+              display-name-key="parentColumn_Name"
+              description-key="parentColumn_Desc"
+              of-type="SingleLine.Text"
+              usage="input"
+              required="false" />
+
+    <!--
+      What happens to a chosen record that no longer belongs to a new parent.
+      `keep` is the default because it is what the platform's own "filter by
+      related rows" does, and because an upgrade must not start emptying
+      columns nobody asked it to touch.
+    -->
+    <property name="onParentChange"
+              display-name-key="onParentChange_Name"
+              description-key="onParentChange_Desc"
+              of-type="Enum"
+              usage="input"
+              required="false"
+              default-value="keep">
+      <value name="keep" display-name-key="onParentChange_Keep_Name">keep</value>
+      <value name="clear" display-name-key="onParentChange_Clear_Name">clear</value>
+    </property>
+
     <resources>
       <code path="index.ts" order="1" />
       <platform-library name="React" version="16.14.0" />
@@ -177,6 +226,12 @@
       WebAPI  — retrieveMultipleRecords, for the type-ahead
       Utility — getEntityMetadata for the target table's primary name column,
                 and lookupObjects for the Browse panel
+
+      Filtering by a parent (0.2.0) adds nothing here. It reads the target
+      table's ManyToOneRelationships with a same-origin fetch from
+      page.getClientUrl(), which is not a feature, and filters through the
+      same retrieveMultipleRecords the search already uses. An upgrade asks
+      the installer for nothing new.
     -->
     <feature-usage>
       <uses-feature name="WebAPI" required="false" />

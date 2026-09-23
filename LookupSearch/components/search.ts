@@ -112,7 +112,12 @@ const unique = (names: string[]): string[] => [...new Set(names.filter(Boolean))
  * third argument, `maxPageSize`, which is the documented way to page a PCF
  * retrieve — `$top` and `maxPageSize` do not combine.
  */
-export function buildQuery(columns: QueryColumns, matchMode: MatchMode, term: string): string {
+export function buildQuery(
+    columns: QueryColumns,
+    matchMode: MatchMode,
+    term: string,
+    constraint: Constraint | null = null,
+): string {
     const select = unique([columns.primaryId, columns.primaryName, columns.secondaryColumn]);
     const match = unique([columns.primaryName, ...columns.searchColumns]);
 
@@ -122,9 +127,62 @@ export function buildQuery(columns: QueryColumns, matchMode: MatchMode, term: st
 
     const filter = clauses.length > 1 ? `(${clauses.join(' or ')})` : clauses.join('');
 
+    // The parent goes outside the match group, so it narrows every column the
+    // term is matched against rather than only the last one. With no parent the
+    // query is byte-for-byte what 0.1.x sent.
+    const narrowed = constraint ? `${filter} and ${constraintClause(constraint)}` : filter;
+
     // `%20` rather than a literal space: the whole options string is meant to be
     // encoded, and this is the only place the builder produces one.
-    return `?$select=${select.join(',')}&$filter=${filter}&$orderby=${columns.primaryName}%20asc`;
+    return `?$select=${select.join(',')}&$filter=${narrowed}&$orderby=${columns.primaryName}%20asc`;
+}
+
+/**
+ * The parent a search is narrowed to: a lookup column on the searched table,
+ * and the record it has to point at.
+ */
+export interface Constraint {
+    /** The lookup column's logical name — `parentcustomerid`, not `_…_value`. */
+    column: string;
+    /** The parent record, as a GUID in any casing, braced or not. */
+    id: string;
+}
+
+const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+export function isGuid(value: string): boolean {
+    return GUID.test(bareId(value));
+}
+
+/**
+ * `_<column>_value eq <guid>` — the Web API's name for a lookup's foreign key,
+ * and a GUID literal unquoted, which is how OData writes one.
+ *
+ * Both halves are checked here as well as upstream. The column comes from
+ * metadata or from a maker, the id from the platform, and this is the last
+ * place before a URL where a wrong one could change what the query means.
+ */
+function constraintClause(constraint: Constraint): string {
+    if (!isLogicalName(constraint.column) || !isGuid(constraint.id)) {
+        throw new Error(`Refusing to filter on ${constraint.column} = ${constraint.id}.`);
+    }
+
+    return `_${constraint.column}_value eq ${bareId(constraint.id)}`;
+}
+
+/**
+ * Does one record still belong to the parent? One row back means yes.
+ *
+ * What `onParentChange = clear` asks before emptying anything: a record that
+ * still belongs to the new parent is left alone, which is the difference
+ * between clearing a mismatch and clearing on every change.
+ */
+export function buildMembershipQuery(primaryId: string, recordId: string, constraint: Constraint): string {
+    if (!isLogicalName(primaryId) || !isGuid(recordId)) {
+        throw new Error(`Refusing to look up ${primaryId} = ${recordId}.`);
+    }
+
+    return `?$select=${primaryId}&$filter=${primaryId} eq ${bareId(recordId)} and ${constraintClause(constraint)}`;
 }
 
 /**

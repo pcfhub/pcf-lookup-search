@@ -391,6 +391,244 @@ check('and none at all where it cannot', mount({ hasNavigation: false }).props()
 
     check('and a host without the panel offers nothing rather than throwing', (await mount({ lookupObjects: false }).props().browse()) === null);
 
+    /* ------------------------------------------- filtered by a parent (0.2.0) */
+
+    /*
+     * A Primary Contact lookup narrowed by the form's Account. Real GUIDs,
+     * because the control refuses to put anything else in a filter, and the
+     * parent handed down braced and upper-case to prove the control does not
+     * depend on which form the platform chose.
+     */
+    const ACME = 'aaaaaaaa-0000-4000-8000-000000000001';
+    const GLOBEX = 'aaaaaaaa-0000-4000-8000-000000000002';
+    const ann = { contactid: 'cccccccc-0000-4000-8000-000000000001', fullname: 'Ann Acme', emailaddress1: 'ann@acme.test', _parentcustomerid_value: ACME };
+    const andy = { contactid: 'cccccccc-0000-4000-8000-000000000002', fullname: 'Andy Globex', emailaddress1: 'andy@globex.test', _parentcustomerid_value: GLOBEX };
+    const anya = { contactid: 'cccccccc-0000-4000-8000-000000000003', fullname: 'Anya Acme', emailaddress1: 'anya@acme.test', _parentcustomerid_value: ACME };
+
+    const COMPANY = { entity: 'contact', column: 'parentcustomerid', target: 'account' };
+    const PARTNER = { entity: 'contact', column: 'cll_partnerid', target: 'account' };
+    const OWNERSHIP = { entity: 'contact', column: 'owninguser', target: 'systemuser' };
+
+    const contacts = (relationships) => ({ tables: { contact: [ann, andy, anya] }, relationships });
+
+    const parentOf = (id, name) => ({
+        type: 'Lookup.Simple',
+        raw: id ? [{ id: `{${id.toUpperCase()}}`, name, entityType: 'account' }] : [],
+        target: 'account',
+        column: 'parentcustomerid',
+    });
+
+    const onContacts = (options) => ({
+        target: 'contact',
+        primaryNameAttribute: 'fullname',
+        value: [],
+        fixture: contacts([COMPANY, OWNERSHIP]),
+        ...options,
+        inputs: { searchColumns: 'emailaddress1', secondaryColumn: 'emailaddress1', ...(options.inputs || {}) },
+    });
+
+    const lastQuery = (handle) =>
+        handle.calls().filter((call) => call.startsWith('webAPI.retrieveMultipleRecords')).pop() || '';
+
+    // The fetch stub and the platform promises chain several deep; a fixed
+    // number of turns lets every one of them land before an assertion reads.
+    const settle = async () => {
+        for (let i = 0; i < 50; i += 1) {
+            await Promise.resolve();
+        }
+    };
+
+    /*
+     * The upgrade promise: a form that never maps the parent sends exactly the
+     * query 0.1.x sent, and keeps Browse.
+     */
+    const before = mount(onContacts({}));
+    const unmapped = mount(onContacts({ bound: { parentValue: 'unmapped' } }));
+
+    await before.props().search('An');
+    await unmapped.props().search('An');
+
+    check('an unmapped parent narrows nothing', unmapped.props().parentKey === '', JSON.stringify(unmapped.props().parentKey));
+
+    check(
+        'and sends the query 0.1.x sent, byte for byte',
+        lastQuery(unmapped) !== '' && lastQuery(unmapped) === lastQuery(before),
+        lastQuery(unmapped),
+    );
+
+    check('and keeps Browse', (await unmapped.props().parent()).kind === 'off');
+
+    const emptyParent = mount(onContacts({ bound: { parentValue: parentOf(null) } }));
+
+    await emptyParent.props().search('An');
+
+    check(
+        'a mapped, empty parent searches the whole table, as the platform’s own filter does',
+        emptyParent.props().parentKey === '' && !lastQuery(emptyParent).includes('_value'),
+        lastQuery(emptyParent),
+    );
+
+    /* A parent with one relationship to it. */
+
+    const filtered = mount(onContacts({ bound: { parentValue: parentOf(ACME, 'Acme') } }));
+    const state = await filtered.props().parent();
+    const acmeOnly = await filtered.props().search('An');
+
+    check('a mapped parent narrows by the column that points at it', state.kind === 'filtered' && state.column === 'parentcustomerid', JSON.stringify(state));
+
+    check(
+        'with the parent id bare and lower-case in the filter',
+        lastQuery(filtered).includes(`_parentcustomerid_value eq ${ACME}`),
+        lastQuery(filtered),
+    );
+
+    check(
+        'and only that parent’s records come back',
+        acmeOnly.map((row) => row.name).join(',') === 'Ann Acme,Anya Acme',
+        acmeOnly.map((row) => row.name).join(','),
+    );
+
+    check('a relationship to another table is not a candidate', state.kind === 'filtered');
+
+    check('Browse is refused while filtered, because the panel cannot be', (await filtered.props().browse()) === null);
+
+    check(
+        'and the panel is never opened',
+        !filtered.calls().some((call) => call.startsWith('utils.lookupObjects')),
+        filtered.calls().filter((call) => call.startsWith('utils.lookupObjects')).join(' '),
+    );
+
+    const threeSearches = mount(onContacts({ bound: { parentValue: parentOf(ACME, 'Acme') } }));
+
+    await Promise.all([threeSearches.props().search('A'), threeSearches.props().search('An'), threeSearches.props().search('Ann')]);
+
+    check(
+        'three searches share one relationships read',
+        threeSearches.calls().filter((call) => call.includes('ManyToOneRelationships')).length === 1,
+        String(threeSearches.calls().filter((call) => call.includes('ManyToOneRelationships')).length),
+    );
+
+    /* Two relationships to the same parent table: the maker's decision. */
+
+    const twoWays = { fixture: contacts([COMPANY, PARTNER]), bound: { parentValue: parentOf(ACME, 'Acme') } };
+    const ambiguous = mount(onContacts(twoWays));
+    const ambiguousState = await ambiguous.props().parent();
+
+    check(
+        'two columns to the parent’s table are named, not guessed between',
+        ambiguousState.kind === 'ambiguous' && ambiguousState.candidates.join(',') === 'cll_partnerid,parentcustomerid',
+        JSON.stringify(ambiguousState),
+    );
+
+    check('and nothing is searched', (await ambiguous.props().search('An')).length === 0 && lastQuery(ambiguous) === '', lastQuery(ambiguous));
+
+    const named = mount(onContacts({ ...twoWays, inputs: { parentColumn: ' ParentCustomerId ' } }));
+
+    check('Parent column settles it, in any case', (await named.props().parent()).kind === 'filtered');
+
+    const misnamed = mount(onContacts({ ...twoWays, inputs: { parentColumn: 'owninguser' } }));
+
+    check(
+        'a Parent column that is not one of the candidates is refused, not trusted',
+        (await misnamed.props().parent()).kind === 'ambiguous',
+    );
+
+    /* Nothing to filter by, or no way to find out: search off, never widened. */
+
+    const unrelated = mount(onContacts({ fixture: contacts([OWNERSHIP]), bound: { parentValue: parentOf(ACME, 'Acme') } }));
+
+    check('no relationship to the parent’s table turns the search off', (await unrelated.props().parent()).kind === 'none');
+
+    for (const [label, options] of [
+        ['offline', { relationshipsStatus: 0 }],
+        ['refused', { relationshipsStatus: 403 }],
+        ['no page', { page: false }],
+    ]) {
+        const blind = mount(onContacts({ ...options, bound: { parentValue: parentOf(ACME, 'Acme') } }));
+        const blindState = await blind.props().parent();
+        const rows = await blind.props().search('An');
+
+        check(
+            `relationships that cannot be read (${label}) turn the search off rather than widening it`,
+            blindState.kind === 'unavailable' && rows.length === 0 && lastQuery(blind) === '',
+            `${JSON.stringify(blindState)} ${lastQuery(blind)}`,
+        );
+    }
+
+    /* What a parent change does to the chosen record. */
+
+    const withAnn = (parent, inputs) => onContacts({
+        value: [{ id: ann.contactid, name: ann.fullname, entityType: 'contact' }],
+        bound: { parentValue: parentOf(parent, 'Parent') },
+        inputs,
+    });
+
+    const cleared2 = mount(withAnn(ACME, { onParentChange: 'clear' }));
+
+    await settle();
+    cleared2.update({ bound: { parentValue: parentOf(GLOBEX, 'Globex') } });
+    await settle();
+
+    check(
+        'clear: a record that does not belong to the new parent is emptied',
+        cleared2.notifications() === 1 && Array.isArray(cleared2.outputs().value) && cleared2.outputs().value.length === 0,
+        `${cleared2.notifications()} ${JSON.stringify(cleared2.outputs())}`,
+    );
+
+    check(
+        'after asking, one row, by id and parent',
+        lastQuery(cleared2).includes(`contactid eq ${ann.contactid} and _parentcustomerid_value eq ${GLOBEX}`) && lastQuery(cleared2).endsWith(' max=1")'),
+        lastQuery(cleared2),
+    );
+
+    const stays = mount(withAnn(GLOBEX, { onParentChange: 'clear' }));
+
+    await settle();
+    stays.update({ bound: { parentValue: parentOf(ACME, 'Acme') } });
+    await settle();
+
+    check('a record that belongs to the new parent is kept', stays.notifications() === 0, String(stays.notifications()));
+
+    const firstPass = mount(withAnn(GLOBEX, { onParentChange: 'clear' }));
+
+    await settle();
+
+    check('the form loading is not a parent change', firstPass.notifications() === 0, String(firstPass.notifications()));
+
+    const offline = mount(withAnn(ACME, { onParentChange: 'clear' }));
+
+    await settle();
+    offline.update({ bound: { parentValue: parentOf(GLOBEX, 'Globex') }, webApiFails: true });
+    await settle();
+
+    check('a check that fails keeps the value', offline.notifications() === 0, String(offline.notifications()));
+
+    const emptied = mount(withAnn(ACME, { onParentChange: 'clear' }));
+
+    await settle();
+    emptied.update({ bound: { parentValue: parentOf(null) } });
+    await settle();
+
+    check('emptying the parent never clears the record', emptied.notifications() === 0, String(emptied.notifications()));
+
+    const kept = mount(withAnn(ACME, {}));
+
+    await settle();
+    kept.update({ bound: { parentValue: parentOf(GLOBEX, 'Globex') } });
+    await settle();
+
+    check(
+        'keep, the default, never touches the record',
+        kept.notifications() === 0 && !kept.calls().some((call) => call.includes('contactid eq')),
+        String(kept.notifications()),
+    );
+
+    check(
+        'and getOutputs never names the parent',
+        !Object.prototype.hasOwnProperty.call(cleared2.outputs(), 'parentValue'),
+        JSON.stringify(cleared2.outputs()),
+    );
+
     /* --------------------------------------------------- what destroy owes */
 
     disposeAll();

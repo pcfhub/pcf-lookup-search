@@ -157,4 +157,40 @@
   <data name="LookupSearch_NoTarget" xml:space="preserve">
     <value>このコントロールは参照列に配置する必要があります。</value>
   </data>
+  <data name="parentValue_Name" xml:space="preserve">
+    <value>親の値</value>
+  </data>
+  <data name="parentValue_Desc" xml:space="preserve">
+    <value>省略可能。このフォーム上の検索列で、関連するレコードに検索を絞り込みます (例: 取引先担当者の親取引先企業)。マップしない場合はテーブル全体を検索します。</value>
+  </data>
+  <data name="parentColumn_Name" xml:space="preserve">
+    <value>親の列</value>
+  </data>
+  <data name="parentColumn_Desc" xml:space="preserve">
+    <value>2 つのテーブルを結ぶ列が複数ある場合のみ: 検索対象テーブル上で親を指す検索列の論理名。</value>
+  </data>
+  <data name="onParentChange_Name" xml:space="preserve">
+    <value>親が変わったとき</value>
+  </data>
+  <data name="onParentChange_Desc" xml:space="preserve">
+    <value>親が変わり、選択したレコードがその親に属さなくなったときの動作。</value>
+  </data>
+  <data name="onParentChange_Keep_Name" xml:space="preserve">
+    <value>保持する</value>
+  </data>
+  <data name="onParentChange_Clear_Name" xml:space="preserve">
+    <value>クリアする</value>
+  </data>
+  <data name="LookupSearch_FilteredBy" xml:space="preserve">
+    <value>{0} で絞り込み中</value>
+  </data>
+  <data name="LookupSearch_ParentAmbiguous" xml:space="preserve">
+    <value>このテーブルと {0} を結ぶ列が複数あります。[親の列] を次のいずれかに設定してください: {1}。</value>
+  </data>
+  <data name="LookupSearch_ParentNone" xml:space="preserve">
+    <value>このテーブルと {0} を結ぶリレーションシップがないため、検索は無効です。</value>
+  </data>
+  <data name="LookupSearch_ParentUnavailable" xml:space="preserve">
+    <value>{0} とのリレーションシップを読み取れなかったため、検索は無効です。</value>
+  </data>
 </root>

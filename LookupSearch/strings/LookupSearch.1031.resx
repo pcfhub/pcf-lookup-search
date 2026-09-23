@@ -157,4 +157,40 @@
   <data name="LookupSearch_NoTarget" xml:space="preserve">
     <value>Dieses Steuerelement muss auf einer Lookup-Spalte platziert werden.</value>
   </data>
+  <data name="parentValue_Name" xml:space="preserve">
+    <value>Übergeordneter Wert</value>
+  </data>
+  <data name="parentValue_Desc" xml:space="preserve">
+    <value>Optional. Eine Nachschlagespalte in diesem Formular, die die Suche auf zugehörige Datensätze einschränkt – etwa das Konto für einen primären Kontakt. Nicht zuordnen, um die ganze Tabelle zu durchsuchen.</value>
+  </data>
+  <data name="parentColumn_Name" xml:space="preserve">
+    <value>Übergeordnete Spalte</value>
+  </data>
+  <data name="parentColumn_Desc" xml:space="preserve">
+    <value>Nur wenn mehr als eine Spalte die beiden Tabellen verbindet: der logische Name der Nachschlagespalte der durchsuchten Tabelle, die auf das übergeordnete Element zeigt.</value>
+  </data>
+  <data name="onParentChange_Name" xml:space="preserve">
+    <value>Bei Änderung des übergeordneten Werts</value>
+  </data>
+  <data name="onParentChange_Desc" xml:space="preserve">
+    <value>Was mit dem gewählten Datensatz geschieht, wenn sich der übergeordnete Wert ändert und der Datensatz nicht mehr dazugehört.</value>
+  </data>
+  <data name="onParentChange_Keep_Name" xml:space="preserve">
+    <value>Beibehalten</value>
+  </data>
+  <data name="onParentChange_Clear_Name" xml:space="preserve">
+    <value>Leeren</value>
+  </data>
+  <data name="LookupSearch_FilteredBy" xml:space="preserve">
+    <value>Gefiltert nach {0}</value>
+  </data>
+  <data name="LookupSearch_ParentAmbiguous" xml:space="preserve">
+    <value>Mehr als eine Spalte verbindet diese Tabelle mit {0}. Legen Sie „Übergeordnete Spalte“ auf eine davon fest: {1}.</value>
+  </data>
+  <data name="LookupSearch_ParentNone" xml:space="preserve">
+    <value>Keine Beziehung verbindet diese Tabelle mit {0}, daher ist die Suche deaktiviert.</value>
+  </data>
+  <data name="LookupSearch_ParentUnavailable" xml:space="preserve">
+    <value>Die Beziehung zu {0} konnte nicht gelesen werden, daher ist die Suche deaktiviert.</value>
+  </data>
 </root>
