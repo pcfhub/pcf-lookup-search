@@ -54,8 +54,8 @@ somebody who works there. Place the control on the contact lookup, then set:
 
 | Property | Value |
 | --- | --- |
-| Parent value | *Account* (the opportunity's account column) |
-| Parent column | `parentcustomerid` |
+| Filter by | *Account* (the opportunity's account column) |
+| Linking column | `parentcustomerid` |
 | Search columns | `emailaddress1` |
 | Secondary column | `emailaddress1` |
 | On parent change | Clear it |
@@ -65,17 +65,17 @@ field says *Filtered by Contoso* while you type. Changing the account empties a
 contact who does not work there and keeps one who does. With the account still
 empty, the search covers every contact, as the platform's own lookup would.
 
-**Expect to set Parent column here.** A contact usually points at an account
+**Expect to set Linking column here.** A contact usually points at an account
 in more than one way — *Company Name*, plus lookups that Microsoft solutions
 add, such as `msa_managingpartnerid`. When there are
 two, the field names both and the search stays off until you choose; set
-**Parent column** to `parentcustomerid` for *Company Name*.
+**Linking column** to `parentcustomerid` for *Company Name*.
 
 ## A product from the chosen category
 
 A custom **Category** table with a **Product** table beneath it, each product
 holding a *Category* lookup. On a form with both, place the control on the
-product lookup and map **Parent value** to the category. Nothing else is
+product lookup and map **Filter by** to the category. Nothing else is
 needed: one lookup links the two tables, so the control finds it.
 
 Leave **On parent change** at *Keep it* if a product may legitimately sit under

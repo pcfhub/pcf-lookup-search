@@ -158,16 +158,16 @@
     <value>This control must be placed on a lookup column.</value>
   </data>
   <data name="parentValue_Name" xml:space="preserve">
-    <value>Parent value</value>
+    <value>Filter by (parent lookup)</value>
   </data>
   <data name="parentValue_Desc" xml:space="preserve">
-    <value>Optional. A lookup column on this form that narrows the search to records related to it — the account for a primary contact. Leave unmapped to search the whole table.</value>
+    <value>Optional. A lookup on this form that narrows the search to records related to it — the account for a primary contact. Leave unmapped to search the whole table.</value>
   </data>
   <data name="parentColumn_Name" xml:space="preserve">
-    <value>Parent column</value>
+    <value>Linking column (only if asked)</value>
   </data>
   <data name="parentColumn_Desc" xml:space="preserve">
-    <value>Only when more than one column links the two tables: the logical name of the lookup column on the searched table that points at the parent.</value>
+    <value>Leave empty unless the field asks for it. Then enter one of the names it lists: the lookup on the searched table that points at the parent — not the parent’s own column.</value>
   </data>
   <data name="onParentChange_Name" xml:space="preserve">
     <value>On parent change</value>
@@ -185,12 +185,15 @@
     <value>Filtered by {0}</value>
   </data>
   <data name="LookupSearch_ParentAmbiguous" xml:space="preserve">
-    <value>More than one column links this table to {0}. Set Parent column to one of: {1}.</value>
+    <value>More than one column links this table to {0}. Set Linking column to one of: {1}.</value>
   </data>
   <data name="LookupSearch_ParentNone" xml:space="preserve">
     <value>Nothing links this table to {0}, so the search is off.</value>
   </data>
   <data name="LookupSearch_ParentUnavailable" xml:space="preserve">
     <value>The link to {0} could not be read, so the search is off.</value>
+  </data>
+  <data name="LookupSearch_ParentUnbound" xml:space="preserve">
+    <value>Linking column is set, but Filter by is not mapped, so the search is off. Map Filter by to the parent lookup on this form.</value>
   </data>
 </root>

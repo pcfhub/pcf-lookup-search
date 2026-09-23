@@ -257,12 +257,17 @@ export class LookupSearch implements ComponentFramework.ReactControl<IInputs, IO
     /** Empty when nothing narrows the search; otherwise changes with anything that could. */
     private parentKey(): string {
         const { mapped, table, id } = this.parent;
+        const named = (this.context.parameters.parentColumn?.raw ?? '').trim().toLowerCase();
+
+        // A Linking column with nothing mapped to link: a state of its own,
+        // settled without reading anything.
+        if (!mapped && named !== '') {
+            return `unbound|${named}`;
+        }
 
         if (!needsRelationships(mapped, id)) {
             return '';
         }
-
-        const named = (this.context.parameters.parentColumn?.raw ?? '').trim().toLowerCase();
 
         return [this.target, table, id, named].join('|');
     }
@@ -280,8 +285,10 @@ export class LookupSearch implements ComponentFramework.ReactControl<IInputs, IO
 
             this.parentState = {
                 key,
-                promise: this.relationshipsOf(this.target).then((relationships) =>
-                    resolveParent({ ...reading, relationships, parentColumn })),
+                promise: needsRelationships(reading.mapped, reading.id)
+                    ? this.relationshipsOf(this.target).then((relationships) =>
+                        resolveParent({ ...reading, relationships, parentColumn }))
+                    : Promise.resolve(resolveParent({ ...reading, relationships: [], parentColumn })),
             };
         }
 
@@ -574,6 +581,7 @@ export class LookupSearch implements ComponentFramework.ReactControl<IInputs, IO
             parentAmbiguous: get('LookupSearch_ParentAmbiguous'),
             parentNone: get('LookupSearch_ParentNone'),
             parentUnavailable: get('LookupSearch_ParentUnavailable'),
+            parentUnbound: get('LookupSearch_ParentUnbound'),
         };
     }
 }

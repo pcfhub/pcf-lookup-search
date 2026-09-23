@@ -158,16 +158,16 @@
     <value>Este control debe colocarse en una columna de búsqueda.</value>
   </data>
   <data name="parentValue_Name" xml:space="preserve">
-    <value>Valor primario</value>
+    <value>Filtrar por (búsqueda primaria)</value>
   </data>
   <data name="parentValue_Desc" xml:space="preserve">
     <value>Opcional. Una columna de búsqueda de este formulario que limita la búsqueda a los registros relacionados, como la cuenta de un contacto principal. Déjela sin asignar para buscar en toda la tabla.</value>
   </data>
   <data name="parentColumn_Name" xml:space="preserve">
-    <value>Columna primaria</value>
+    <value>Columna de vínculo (solo si se pide)</value>
   </data>
   <data name="parentColumn_Desc" xml:space="preserve">
-    <value>Solo cuando más de una columna relaciona las dos tablas: el nombre lógico de la columna de búsqueda de la tabla buscada que apunta al primario.</value>
+    <value>Déjela vacía salvo que el campo la pida. Entonces escriba uno de los nombres que indica: la columna de búsqueda de la tabla buscada que apunta al primario, no la columna del propio primario.</value>
   </data>
   <data name="onParentChange_Name" xml:space="preserve">
     <value>Al cambiar el primario</value>
@@ -185,12 +185,15 @@
     <value>Filtrado por {0}</value>
   </data>
   <data name="LookupSearch_ParentAmbiguous" xml:space="preserve">
-    <value>Más de una columna relaciona esta tabla con {0}. Establezca Columna primaria en una de estas: {1}.</value>
+    <value>Más de una columna relaciona esta tabla con {0}. Establezca Columna de vínculo en una de estas: {1}.</value>
   </data>
   <data name="LookupSearch_ParentNone" xml:space="preserve">
     <value>Ninguna relación une esta tabla con {0}, así que la búsqueda está desactivada.</value>
   </data>
   <data name="LookupSearch_ParentUnavailable" xml:space="preserve">
     <value>No se pudo leer la relación con {0}, así que la búsqueda está desactivada.</value>
+  </data>
+  <data name="LookupSearch_ParentUnbound" xml:space="preserve">
+    <value>Columna de vínculo está definida, pero Filtrar por no está asignado, así que la búsqueda está desactivada. Asigne Filtrar por a la búsqueda primaria de este formulario.</value>
   </data>
 </root>

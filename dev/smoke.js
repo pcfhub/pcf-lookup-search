@@ -458,6 +458,32 @@ check('and none at all where it cannot', mount({ hasNavigation: false }).props()
 
     check('and keeps Browse', (await unmapped.props().parent()).kind === 'off');
 
+    /*
+     * The first mistake on the test form (2026-09-23): the parent's own column
+     * typed into Linking column, and Filter by left unmapped. The maker meant
+     * to filter, so the search is off and says why — it used to search the
+     * whole table in silence.
+     */
+    const unbound = mount(onContacts({ bound: { parentValue: 'unmapped' }, inputs: { parentColumn: 'parentaccountid' } }));
+    const unboundState = await unbound.props().parent();
+    const unboundRows = await unbound.props().search('An');
+
+    check(
+        'a Linking column with no Filter by mapped turns the search off',
+        unboundState.kind === 'unbound' && unboundRows.length === 0 && lastQuery(unbound) === '',
+        `${JSON.stringify(unboundState)} ${lastQuery(unbound)}`,
+    );
+
+    check('and reads nothing to find that out', !unbound.calls().some((call) => call.includes('ManyToOneRelationships')));
+
+    check('and offers no Browse', (await unbound.props().browse()) === null);
+
+    check(
+        'and its message comes from the .resx',
+        unbound.props().strings.parentUnbound === 'resx:LookupSearch_ParentUnbound',
+        unbound.props().strings.parentUnbound,
+    );
+
     const emptyParent = mount(onContacts({ bound: { parentValue: parentOf(null) } }));
 
     await emptyParent.props().search('An');

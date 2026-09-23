@@ -31,6 +31,8 @@ export interface ILookupStrings {
     parentNone: string;
     /** Carries a `{0}` for the parent's table. */
     parentUnavailable: string;
+    /** A Linking column set with no Filter by mapped. */
+    parentUnbound: string;
 }
 
 export interface IProps {
@@ -429,6 +431,8 @@ export function LookupSearchControl(props: IProps): React.ReactElement | null {
                 return format(strings.parentNone, parent.table);
             case 'unavailable':
                 return format(strings.parentUnavailable, parent.table);
+            case 'unbound':
+                return strings.parentUnbound;
             default:
                 break;
         }

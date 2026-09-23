@@ -25,7 +25,7 @@ small.
 
 ## Can I filter the results by another field on the form?
 
-By another **lookup**, yes, from 0.2.0: map **Parent value** to it, and the
+By another **lookup**, yes, from 0.2.0: map **Filter by** to it, and the
 search offers only records related to the parent. See
 [Model-driven apps](model-driven.md#filtering-by-a-parent-column). A Choice
 column or a fixed condition such as *active records only* is not supported;
@@ -40,7 +40,7 @@ search is holding back. Browse comes back while the parent is empty.
 
 ## The field says more than one column links the tables. What do I set?
 
-Set **Parent column** to one of the names the message lists — the lookup on the
+Set **Linking column** to one of the names the message lists — the lookup on the
 searched table that points at the parent you mapped. A contact, for instance,
 can point at an account both as its company and through a custom column, and
 the control will not guess which one you mean.

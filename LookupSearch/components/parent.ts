@@ -36,7 +36,13 @@ export type ParentState =
     /** Nothing on the searched table points at the parent's table. */
     | { kind: 'none'; table: string }
     /** The relationships could not be read, or the parent is not something a query can hold. */
-    | { kind: 'unavailable'; table: string };
+    | { kind: 'unavailable'; table: string }
+    /**
+     * A Linking column with no Filter by mapped. The maker meant to filter
+     * and bound nothing to filter by — measured as the first mistake on the
+     * test form, 2026-09-23, where it searched the whole table in silence.
+     */
+    | { kind: 'unbound' };
 
 export interface ParentInput {
     /**
@@ -66,6 +72,10 @@ export function needsRelationships(mapped: boolean, id: string | null): boolean 
 }
 
 export function resolveParent(input: ParentInput): ParentState {
+    if (!input.mapped && (input.parentColumn ?? '').trim() !== '') {
+        return { kind: 'unbound' };
+    }
+
     if (!needsRelationships(input.mapped, input.id)) {
         return { kind: 'off' };
     }

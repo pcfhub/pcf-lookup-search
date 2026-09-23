@@ -158,16 +158,16 @@
     <value>Dieses Steuerelement muss auf einer Lookup-Spalte platziert werden.</value>
   </data>
   <data name="parentValue_Name" xml:space="preserve">
-    <value>Übergeordneter Wert</value>
+    <value>Filtern nach (übergeordnete Nachschlagespalte)</value>
   </data>
   <data name="parentValue_Desc" xml:space="preserve">
     <value>Optional. Eine Nachschlagespalte in diesem Formular, die die Suche auf zugehörige Datensätze einschränkt – etwa das Konto für einen primären Kontakt. Nicht zuordnen, um die ganze Tabelle zu durchsuchen.</value>
   </data>
   <data name="parentColumn_Name" xml:space="preserve">
-    <value>Übergeordnete Spalte</value>
+    <value>Verknüpfungsspalte (nur auf Nachfrage)</value>
   </data>
   <data name="parentColumn_Desc" xml:space="preserve">
-    <value>Nur wenn mehr als eine Spalte die beiden Tabellen verbindet: der logische Name der Nachschlagespalte der durchsuchten Tabelle, die auf das übergeordnete Element zeigt.</value>
+    <value>Leer lassen, außer das Feld fordert es an. Dann einen der dort genannten Namen eingeben: die Nachschlagespalte der durchsuchten Tabelle, die auf das übergeordnete Element zeigt – nicht dessen eigene Spalte.</value>
   </data>
   <data name="onParentChange_Name" xml:space="preserve">
     <value>Bei Änderung des übergeordneten Werts</value>
@@ -185,12 +185,15 @@
     <value>Gefiltert nach {0}</value>
   </data>
   <data name="LookupSearch_ParentAmbiguous" xml:space="preserve">
-    <value>Mehr als eine Spalte verbindet diese Tabelle mit {0}. Legen Sie „Übergeordnete Spalte“ auf eine davon fest: {1}.</value>
+    <value>Mehr als eine Spalte verbindet diese Tabelle mit {0}. Legen Sie „Verknüpfungsspalte“ auf eine davon fest: {1}.</value>
   </data>
   <data name="LookupSearch_ParentNone" xml:space="preserve">
     <value>Keine Beziehung verbindet diese Tabelle mit {0}, daher ist die Suche deaktiviert.</value>
   </data>
   <data name="LookupSearch_ParentUnavailable" xml:space="preserve">
     <value>Die Beziehung zu {0} konnte nicht gelesen werden, daher ist die Suche deaktiviert.</value>
+  </data>
+  <data name="LookupSearch_ParentUnbound" xml:space="preserve">
+    <value>„Verknüpfungsspalte“ ist gesetzt, aber „Filtern nach“ ist nicht zugeordnet, daher ist die Suche deaktiviert. Ordnen Sie „Filtern nach“ der übergeordneten Nachschlagespalte in diesem Formular zu.</value>
   </data>
 </root>

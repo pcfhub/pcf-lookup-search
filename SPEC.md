@@ -179,6 +179,15 @@ use as the example was not the one tested; the relationship is the same one
   *PCF Test - Mismatch* (parent Acme, contact Andy Globex) kept Andy on load.
   Emptying the parent never cleared the contact, and Browse came back.
 
+**The labels changed after the form run.** The first configuration put
+Account's own column into what was then *Parent column* and left *Parent
+value* unmapped — and the control searched the whole table in silence. So the
+two are now **Filter by (parent lookup)** and **Linking column (only if
+asked)**, and a Linking column with no Filter by mapped is a state of its own,
+`unbound`, that turns the search off and says why. Only display strings and
+that one state changed; the property names are the same, so a form configured
+under the old labels keeps its settings.
+
 ## Not verified
 
 - **The unmapped shape on this control.** A form with no Parent value mapped

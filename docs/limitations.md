@@ -17,7 +17,7 @@ order: 7
   regarding field accepting many — is not supported; use the stock lookup there.
 
 - **One parent, and it must be a lookup.** The search can follow one lookup
-  on the form (**Parent value**). A Choice column, several parents at once, or
+  on the form (**Filter by**). A Choice column, several parents at once, or
   a fixed condition such as *active records only* are not supported;
   `context.webAPI` takes no form context of its own, and the parent is the one
   value the platform hands the control. A view with the filter built in, set
