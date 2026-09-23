@@ -179,9 +179,16 @@ form's Account:
    column `parentcustomerid`, Parent Account *PCF Test - Acme*: "Filtered by
    PCF Test - Acme" under the box, typing `an` offered Ann Acme and Anya Acme
    and not Andy Globex (a contact of another account whose name matches), and
-   the Browse button was gone. Still to watch: the same with Globex, a pick
-   surviving Save, and whether `clear` empties a contact of another account —
-   which is question 2.
+   the Browse button was gone. Switched to *PCF Test - Globex*, it offered
+   Andy Globex only. Still to watch: a pick surviving Save, and whether
+   `clear` empties a contact of another account.
+
+   **Evidence for question 2 from the same run:** with the record still
+   *Unsaved* after the parent changed to Globex, the hint already read
+   "Filtered by PCF Test - Globex". The hint is built from the parent read in
+   `updateView`, so the platform does call `updateView` for a change to the
+   bound parent column made on the form, before any save. What is left of
+   question 2 is the check query and the clear themselves.
 
 Searching and rendering results are verified on a real form. Everything below is
 what happens *after* somebody picks one, and none of it has been watched.
