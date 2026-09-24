@@ -64,21 +64,36 @@ is typed as of 1.3.18 and needs no cast. Confirmed again here against
 
 ## Demo
 
-`limited`, and the skill's demo section names this exact case: a type-ahead that
-searches records the harness was never given is `limited`, because the search
-box has no candidates and cannot be made to have any.
+**`mocked` from 0.2.0, on a stand-in Dataverse** — and **it needs pcfhub's
+`demo-dataverse-field` deployed first.** Until then the hub reads a
+`dataverse`-only fixture as malformed, so this `pcfhub.json` and
+`demo/contacts.json` must not reach the default branch before the hub change
+does.
 
-Four platform calls, and the harness answers none of them —
-`retrieveMultipleRecords`, `getEntityMetadata`, `lookupObjects`, and
-`getTargetEntityType` on the property itself. What remains is genuinely
-interactive: the selected record renders, Clear empties it and reports the new
-value, and the disabled, hidden, no-access and business-rule-error states are
-all reachable from presets. `demo.limitations` names each dead path and what a
-real form does instead.
+`demo/contacts.json` is the whole fixture for a field control: a `dataverse`
+section with twelve contacts across three accounts, the two contact → account
+lookups the test environment has (`parentcustomerid`, `msa_managingpartnerid`),
+and `lookupTargets` so an empty lookup still names its table. It travels
+beside the props, and the harness answers `getEntityMetadata`,
+`retrieveMultipleRecords` (including the `or` a multi-column search sends),
+`ManyToOneRelationships` and `lookupObjects` from it.
 
-The consequence worth flagging: **the demo's default state is the control's
-degraded state**, which no correctly configured form ever shows. The limitations
-say so rather than leaving a visitor to conclude the control is broken.
+Watched 2026-09-24 in the hub's own harness (`npm run dev:demo-harness`, the
+bundle served from this repository): *search* lists six "an" contacts with
+their addresses and Browse opens the dialog, a pick lands as a chip;
+*filtered* says "Filtered by Acme Corporation", hides Browse and offers only
+Ann Acme and Anya Petrova; *two linking columns* shows the same message the
+real form did; *selected* renders its chip with Browse back.
+
+What it cannot show, and `demo.limitations` says so: the unbound message (the
+harness builds every lookup as mapped), a refused request, and a parent
+changed by the user — a preset switch is the only way to move it.
+
+**One oddity to look at, not yet explained:** after clearing the chip with
+the ×, typing ran the search (the query is in the log) but the list did not
+open until the field was clicked again. Not seen on the real form, where the
+same path was used in test (b). If it reproduces there, it is the focus the
+clear restores racing the popup's own open state.
 
 ## What a real form settled
 

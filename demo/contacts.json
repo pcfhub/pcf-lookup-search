@@ -1,0 +1,180 @@
+{
+    "dataverse": {
+        "tables": {
+            "contact": {
+                "entitySet": "contacts",
+                "primaryId": "contactid",
+                "primaryName": "fullname",
+                "rows": [
+                    {
+                        "id": "cccccccc-0000-4000-8000-000000000001",
+                        "values": {
+                            "fullname": "Ann Acme",
+                            "emailaddress1": "ann.acme@acmecorporation.example",
+                            "jobtitle": "Buyer",
+                            "_parentcustomerid_value": "aaaaaaaa-0000-4000-8000-000000000001",
+                            "_msa_managingpartnerid_value": "aaaaaaaa-0000-4000-8000-000000000003"
+                        }
+                    },
+                    {
+                        "id": "cccccccc-0000-4000-8000-000000000002",
+                        "values": {
+                            "fullname": "Anya Petrova",
+                            "emailaddress1": "anya.petrova@acmecorporation.example",
+                            "jobtitle": "Engineer",
+                            "_parentcustomerid_value": "aaaaaaaa-0000-4000-8000-000000000001",
+                            "_msa_managingpartnerid_value": null
+                        }
+                    },
+                    {
+                        "id": "cccccccc-0000-4000-8000-000000000003",
+                        "values": {
+                            "fullname": "Alberto Ruiz",
+                            "emailaddress1": "alberto.ruiz@acmecorporation.example",
+                            "jobtitle": "Analyst",
+                            "_parentcustomerid_value": "aaaaaaaa-0000-4000-8000-000000000001",
+                            "_msa_managingpartnerid_value": null
+                        }
+                    },
+                    {
+                        "id": "cccccccc-0000-4000-8000-000000000004",
+                        "values": {
+                            "fullname": "Dana Whitfield",
+                            "emailaddress1": "dana.whitfield@acmecorporation.example",
+                            "jobtitle": "Director",
+                            "_parentcustomerid_value": "aaaaaaaa-0000-4000-8000-000000000001",
+                            "_msa_managingpartnerid_value": "aaaaaaaa-0000-4000-8000-000000000002"
+                        }
+                    },
+                    {
+                        "id": "cccccccc-0000-4000-8000-000000000005",
+                        "values": {
+                            "fullname": "Andy Globex",
+                            "emailaddress1": "andy.globex@globex.example",
+                            "jobtitle": "Buyer",
+                            "_parentcustomerid_value": "aaaaaaaa-0000-4000-8000-000000000002",
+                            "_msa_managingpartnerid_value": null
+                        }
+                    },
+                    {
+                        "id": "cccccccc-0000-4000-8000-000000000006",
+                        "values": {
+                            "fullname": "Angela Moss",
+                            "emailaddress1": "angela.moss@globex.example",
+                            "jobtitle": "Engineer",
+                            "_parentcustomerid_value": "aaaaaaaa-0000-4000-8000-000000000002",
+                            "_msa_managingpartnerid_value": "aaaaaaaa-0000-4000-8000-000000000001"
+                        }
+                    },
+                    {
+                        "id": "cccccccc-0000-4000-8000-000000000007",
+                        "values": {
+                            "fullname": "Marcus Feld",
+                            "emailaddress1": "marcus.feld@globex.example",
+                            "jobtitle": "Analyst",
+                            "_parentcustomerid_value": "aaaaaaaa-0000-4000-8000-000000000002",
+                            "_msa_managingpartnerid_value": null
+                        }
+                    },
+                    {
+                        "id": "cccccccc-0000-4000-8000-000000000008",
+                        "values": {
+                            "fullname": "Anika Sorensen",
+                            "emailaddress1": "anika.sorensen@initech.example",
+                            "jobtitle": "Director",
+                            "_parentcustomerid_value": "aaaaaaaa-0000-4000-8000-000000000003",
+                            "_msa_managingpartnerid_value": null
+                        }
+                    },
+                    {
+                        "id": "cccccccc-0000-4000-8000-000000000009",
+                        "values": {
+                            "fullname": "Peter Gibbons",
+                            "emailaddress1": "peter.gibbons@initech.example",
+                            "jobtitle": "Buyer",
+                            "_parentcustomerid_value": "aaaaaaaa-0000-4000-8000-000000000003",
+                            "_msa_managingpartnerid_value": null
+                        }
+                    },
+                    {
+                        "id": "cccccccc-0000-4000-8000-000000000010",
+                        "values": {
+                            "fullname": "Samir Nagheenanajar",
+                            "emailaddress1": "samir.nagheenanajar@initech.example",
+                            "jobtitle": "Engineer",
+                            "_parentcustomerid_value": "aaaaaaaa-0000-4000-8000-000000000003",
+                            "_msa_managingpartnerid_value": "aaaaaaaa-0000-4000-8000-000000000001"
+                        }
+                    },
+                    {
+                        "id": "cccccccc-0000-4000-8000-000000000011",
+                        "values": {
+                            "fullname": "Alan Turing",
+                            "emailaddress1": "alan.turing@example.com",
+                            "jobtitle": "Analyst",
+                            "_parentcustomerid_value": null,
+                            "_msa_managingpartnerid_value": null
+                        }
+                    },
+                    {
+                        "id": "cccccccc-0000-4000-8000-000000000012",
+                        "values": {
+                            "fullname": "Ana Lima",
+                            "emailaddress1": "ana.lima@example.com",
+                            "jobtitle": "Director",
+                            "_parentcustomerid_value": null,
+                            "_msa_managingpartnerid_value": null
+                        }
+                    }
+                ]
+            },
+            "account": {
+                "entitySet": "accounts",
+                "primaryId": "accountid",
+                "primaryName": "name",
+                "rows": [
+                    {
+                        "id": "aaaaaaaa-0000-4000-8000-000000000001",
+                        "values": {
+                            "name": "Acme Corporation"
+                        }
+                    },
+                    {
+                        "id": "aaaaaaaa-0000-4000-8000-000000000002",
+                        "values": {
+                            "name": "Globex"
+                        }
+                    },
+                    {
+                        "id": "aaaaaaaa-0000-4000-8000-000000000003",
+                        "values": {
+                            "name": "Initech"
+                        }
+                    }
+                ]
+            }
+        },
+        "relationships": [
+            {
+                "kind": "oneToMany",
+                "schemaName": "contact_customer_accounts",
+                "referencedEntity": "account",
+                "referencingEntity": "contact",
+                "referencingAttribute": "parentcustomerid",
+                "referencingNavigationProperty": "parentcustomerid_account"
+            },
+            {
+                "kind": "oneToMany",
+                "schemaName": "msa_contact_managingpartner",
+                "referencedEntity": "account",
+                "referencingEntity": "contact",
+                "referencingAttribute": "msa_managingpartnerid",
+                "referencingNavigationProperty": "msa_managingpartnerid"
+            }
+        ],
+        "lookupTargets": {
+            "value": "contact",
+            "parentValue": "account"
+        }
+    }
+}

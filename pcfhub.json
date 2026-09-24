@@ -32,28 +32,74 @@
     },
 
     "demo": {
-        "fidelity": "limited",
+        "fidelity": "mocked",
         "bundle": "out/controls/LookupSearch/bundle.js",
-        "styles": ["out/controls/LookupSearch/css/LookupSearch.css"],
+        "styles": [
+            "out/controls/LookupSearch/css/LookupSearch.css"
+        ],
+        "datasetFixture": "demo/contacts.json",
         "limitations": [
-            "Typing searches nothing. The control calls webAPI.retrieveMultipleRecords() against the table the lookup points at, and there is no environment behind this origin to answer — so the demo shows the control's own \"search unavailable\" state rather than an empty result list, which is what a real form would never show.",
-            "The target table is read from the preset rather than from the column. On a form, context.parameters.value.getTargetEntityType() names the table the lookup points at; the harness builds a property bag with no methods on it, so the control falls back to the entityType carried by the value it was given. A preset with no value therefore has no target at all, and says so.",
-            "Search columns cannot be demonstrated. The primary name column comes from utils.getEntityMetadata(), which is model-driven only and absent here, so neither matchMode nor searchColumns changes anything you can see.",
-            "Browse opens nothing. utils.lookupObjects() is the platform's own lookup panel; outside a model-driven app there is no panel to open, and the button reports the failure instead of showing one.",
-            "Filtering by a parent (Filter by, 0.2.0) cannot be shown. It reads the searched table's relationships from the organisation through context.page, which this harness does not have, so a preset with a parent mapped would only show the control's \"could not be read\" state. No preset maps one; every preset here behaves as a form with no parent configured.",
-            "What does work is everything that never leaves the browser: the selected record renders, Clear empties it and reports the new value, and the disabled, hidden, no-access and business-rule-error states are all reachable from the presets."
+            "The demo’s Dataverse is a fixture held in your browser: twelve contacts across three accounts, and the two lookups from contact to account a real environment often has (Company Name and a Managing Partner column). Search, Browse and the parent filter go through the same Web API calls and relationship metadata a form sends, answered from that fixture. Nothing is saved, and Reset or a reload puts it back.",
+            "Browse opens the demo’s own lookup dialog, a searchable list of the contact table. The platform’s dialog also offers views and columns, which the demo’s does not.",
+            "The parent is set by the preset, not by another field. On a form, Filter by follows a lookup the user changes; here, switching between the Filtered and Two linking columns presets is the way to change it, and On parent change: Clear it acts on that switch.",
+            "The Linking column warning for a form that sets Linking column without mapping Filter by cannot be shown. The demo builds every lookup property as mapped, so the control never sees an unmapped one.",
+            "A refused request, such as a user without read access to contacts, cannot be shown: the demo’s Dataverse grants everything. Opening the selected record reports the call and navigates nowhere."
         ],
         "presets": [
             {
+                "slug": "search",
+                "name": "Search",
+                "description": "An empty lookup. Type \"an\" to search contacts by name or email address, each with the address on a second line; Browse opens the lookup dialog.",
+                "props": {
+                    "value": [],
+                    "parentValue": [],
+                    "placeholder": "Search contacts",
+                    "matchMode": "startsWith",
+                    "minimumCharacters": 2,
+                    "maxResults": 8,
+                    "secondaryColumn": "emailaddress1",
+                    "searchColumns": "emailaddress1",
+                    "allowBrowse": true,
+                    "parentColumn": "",
+                    "onParentChange": "keep"
+                },
+                "isDefault": true
+            },
+            {
                 "slug": "selected",
                 "name": "A record selected",
-                "description": "The state a form is usually in — a lookup that already points somewhere. Clear empties it.",
+                "description": "The state a form is usually in: a lookup that already points somewhere. Clear it to search again.",
                 "props": {
                     "value": [
                         {
-                            "id": "8f2b1c44-9d3e-4b07-a1f5-6c0d2e7a9b31",
+                            "id": "cccccccc-0000-4000-8000-000000000004",
                             "name": "Dana Whitfield",
                             "entityType": "contact"
+                        }
+                    ],
+                    "parentValue": [],
+                    "placeholder": "Search contacts",
+                    "matchMode": "startsWith",
+                    "minimumCharacters": 2,
+                    "maxResults": 8,
+                    "secondaryColumn": "emailaddress1",
+                    "searchColumns": "emailaddress1",
+                    "allowBrowse": true,
+                    "parentColumn": "",
+                    "onParentChange": "keep"
+                }
+            },
+            {
+                "slug": "filtered",
+                "name": "Filtered by account",
+                "description": "Filter by is mapped to the account on the form, which holds Acme Corporation. Type \"an\": only Acme’s contacts come back, the field says so, and Browse is hidden because the platform dialog cannot be filtered.",
+                "props": {
+                    "value": [],
+                    "parentValue": [
+                        {
+                            "id": "aaaaaaaa-0000-4000-8000-000000000001",
+                            "name": "Acme Corporation",
+                            "entityType": "account"
                         }
                     ],
                     "placeholder": "Search contacts",
@@ -61,45 +107,52 @@
                     "minimumCharacters": 2,
                     "maxResults": 8,
                     "secondaryColumn": "emailaddress1",
-                    "searchColumns": "emailaddress1,telephone1",
-                    "allowBrowse": true
-                },
-                "isDefault": true
+                    "searchColumns": "emailaddress1",
+                    "allowBrowse": true,
+                    "parentColumn": "parentcustomerid",
+                    "onParentChange": "clear"
+                }
             },
             {
-                "slug": "empty",
-                "name": "Nothing selected",
-                "description": "An empty lookup. With no value and no form behind it there is no target table either, which is the message the control shows.",
+                "slug": "ambiguous",
+                "name": "Two linking columns",
+                "description": "The same parent with Linking column left empty. Two columns on contact point at account, so the control names both and waits for the maker to choose rather than guessing.",
                 "props": {
                     "value": [],
+                    "parentValue": [
+                        {
+                            "id": "aaaaaaaa-0000-4000-8000-000000000001",
+                            "name": "Acme Corporation",
+                            "entityType": "account"
+                        }
+                    ],
                     "placeholder": "Search contacts",
                     "matchMode": "startsWith",
                     "minimumCharacters": 2,
                     "maxResults": 8,
-                    "secondaryColumn": "",
-                    "searchColumns": "",
-                    "allowBrowse": true
+                    "secondaryColumn": "emailaddress1",
+                    "searchColumns": "emailaddress1",
+                    "allowBrowse": true,
+                    "parentColumn": "",
+                    "onParentChange": "keep"
                 }
             },
             {
                 "slug": "no-browse",
                 "name": "Search only",
-                "description": "The same control with the Browse button switched off, for forms that want one way in rather than two.",
+                "description": "Allow browse switched off, for forms that want one way in rather than two. Contains matching, from three characters.",
                 "props": {
-                    "value": [
-                        {
-                            "id": "3a71e08c-5b62-4a19-8d47-2f9c6b04e5a8",
-                            "name": "Marcus Feld",
-                            "entityType": "contact"
-                        }
-                    ],
+                    "value": [],
+                    "parentValue": [],
                     "placeholder": "Search contacts",
                     "matchMode": "contains",
                     "minimumCharacters": 3,
                     "maxResults": 5,
                     "secondaryColumn": "emailaddress1",
-                    "searchColumns": "",
-                    "allowBrowse": false
+                    "searchColumns": "emailaddress1",
+                    "allowBrowse": false,
+                    "parentColumn": "",
+                    "onParentChange": "keep"
                 }
             }
         ]
