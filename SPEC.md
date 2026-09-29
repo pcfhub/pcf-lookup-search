@@ -89,6 +89,15 @@ What it cannot show, and `demo.limitations` says so: the unbound message (the
 harness builds every lookup as mapped), a refused request, and a parent
 changed by the user — a preset switch is the only way to move it.
 
+**A refused request stays out of reach after pcfhub/pcfhub#53** (2026-09-28).
+That let a fixture refuse a *write*, and this control writes nothing: the form
+saves the lookup it hands back through `value`. Its one request is the search,
+a read, and the stand-in answers every read. Showing a refused search would
+take the harness refusing reads, and a fixture per preset: one contact table
+that refuses reads would break every preset, not one. The limitation now says
+why, instead of saying the stand-in grants everything, which stopped being
+true.
+
 **One oddity to look at, not yet explained:** after clearing the chip with
 the ×, typing ran the search (the query is in the log) but the list did not
 open until the field was clicked again. Not seen on the real form, where the

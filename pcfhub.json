@@ -43,7 +43,7 @@
             "Browse opens the demo’s own lookup dialog, a searchable list of the contact table. The platform’s dialog also offers views and columns, which the demo’s does not.",
             "The parent is set by the preset, not by another field. On a form, Filter by follows a lookup the user changes; here, switching between the Filtered and Two linking columns presets is the way to change it, and On parent change: Clear it acts on that switch.",
             "The Linking column warning for a form that sets Linking column without mapping Filter by cannot be shown. The demo builds every lookup property as mapped, so the control never sees an unmapped one.",
-            "A refused request, such as a user without read access to contacts, cannot be shown: the demo’s Dataverse grants everything. Opening the selected record reports the call and navigates nowhere."
+            "A refused search, such as a user without read access to contacts, cannot be shown. The demo’s Dataverse can refuse a write, and this control never writes — the form saves the lookup it hands back — so its one request is the search, a read, and reads are always answered. On a form the refusal’s sentence appears under the field. Opening the selected record reports the call and navigates nowhere."
         ],
         "presets": [
             {
