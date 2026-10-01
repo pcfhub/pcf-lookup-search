@@ -4,6 +4,7 @@
     "slug": "pcf-lookup-search",
     "name": "Lookup Search",
     "tagline": "A lookup column as a type-ahead search over the target table.",
+    "summary": "Replaces a lookup column with a type-ahead search over the target table, and writes the chosen record straight to the column.\n\n- Matches extra columns you name, such as an email address or a reference number, not only the record's name\n- Shows a second line under each result, to tell similar records apart\n- Can follow another lookup on the form, such as offering only the selected account's contacts\n- A Browse button still opens the platform's own lookup dialog\n\nModel-driven apps only.",
     "category": "pickers",
     "hosts": ["model-driven"],
     "tags": ["react", "lookup", "search", "type-ahead", "dataverse", "accessible"],
