@@ -8,6 +8,8 @@
     "category": "pickers",
     "hosts": ["model-driven"],
     "tags": ["react", "lookup", "search", "type-ahead", "dataverse", "accessible"],
+    "supportLevel": "reference",
+    "builtWith": "ai",
 
     "control": {
         "namespace": "PCFHub",

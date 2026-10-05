@@ -8,6 +8,10 @@ order: 1
 
 A lookup column as a type-ahead search over the target table.
 
+:::callout{type=warning}
+**Reference example · built with AI.** This control was written with AI (Claude) and tested on a live Dataverse form; its code has not been reviewed line by line. It is published as a worked example and is not maintained — read the source and [SPEC.md](https://github.com/pcfhub/pcf-lookup-search/blob/main/SPEC.md) (what was measured on the form) before you use it. Fixes are not guaranteed.
+:::
+
 ::image{src=media/screenshot.png alt="Typing two characters into a contact lookup, with two matching records listed beneath the field and each showing its email address on a second line" zoom}
 
 Place it on any `Lookup.Simple` column. It reads the table that column points

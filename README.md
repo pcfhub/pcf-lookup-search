@@ -2,6 +2,8 @@
 
 A lookup column as a type-ahead search over the target table.
 
+> **Reference example · built with AI.** This control was written with AI (Claude) and tested on a live Dataverse form; its code has not been reviewed line by line. It is published as a worked example and is not maintained — read the source and [`SPEC.md`](SPEC.md) (what was measured on the form) before you use it. Fixes are not guaranteed.
+
 [![Build](https://github.com/pcfhub/pcf-lookup-search/actions/workflows/build.yml/badge.svg)](https://github.com/pcfhub/pcf-lookup-search/actions/workflows/build.yml)
 [![Release](https://github.com/pcfhub/pcf-lookup-search/actions/workflows/release.yml/badge.svg)](https://github.com/pcfhub/pcf-lookup-search/actions/workflows/release.yml)
 
@@ -10,7 +12,6 @@ A lookup column as a type-ahead search over the target table.
 Documentation lives on [PCFHub](https://pcfhub.dev/components/pcf-lookup-search), built
 from the `docs/` directory in this repository. Edit the Markdown here; the hub
 recompiles it.
-
 
 ## What it does
 
@@ -40,7 +41,6 @@ on a form pointing nowhere near one XML attribute. So the manifest asks
 optionally and the code feature-detects, which is deliberately narrower than the
 type definitions claim.
 
-
 ## Properties
 
 | Property | Type | Usage | Default | What it controls |
@@ -67,7 +67,6 @@ Notes that do not fit the table:
   optional. What each is for is in
   [docs/installation.md](docs/installation.md).
 
-
 ## On the hub
 
 `demo.fidelity` is **`limited`**, and there is no argument for anything higher.
@@ -91,7 +90,6 @@ in the demo also has no target and says so; **Search only** is the same control
 with Browse switched off. Every preset sets every input property, because a
 manifest `default-value` arrives at the harness as the raw XML string and
 `Boolean("false")` is `true`.
-
 
 ## Install
 
