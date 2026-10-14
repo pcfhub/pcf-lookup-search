@@ -328,6 +328,29 @@ The form was put back afterwards: Primary Contact in search mode with no
 view set; the Currency dropdown stays on the test form as a placement to look
 at.
 
+## 0.3.1: a list left open over the header
+
+Reported on 0.3.0 with a screenshot the evening it shipped: type, scroll the
+form, and the list rode up over the form's header with its field gone
+beneath it. Measured on the test form before a line changed:
+
+- **The header is outside the form's scroller.** The scrolling ancestor is
+  `tab-section0`, from y 286; the field had scrolled to y 123–157, clipped out
+  of it. The listbox is portalled to the page, so nothing clips it, and
+  Fluent's positioning keeps it attached to the field wherever it goes.
+- **Fluent knew.** The listbox carried `data-popper-reference-hidden` (beside
+  `-escaped` and `-is-intersecting`) and stayed `visibility: visible`.
+- **An `IntersectionObserver` on the field reads it too** — ratio 0, not
+  intersecting — because intersection is clipped by every scrolling ancestor.
+
+0.3.1 closes the list when less than half the field is visible, in both
+modes; what was typed stays and a click opens it again. Walked on the form:
+a small scroll kept the list (field at y 323), the scroll that put the field
+at y 123 closed it (`aria-expanded="false"`, `an` still in the box), and a
+click on the field reopened it. A list that flips *above* a field near the
+window's bottom still overlays the header, as any popover does — the field is
+in view then. Not reachable from the suite, which renders no DOM.
+
 ## Not verified
 
 - **The unmapped shape on this control.** A form with no Parent value mapped
