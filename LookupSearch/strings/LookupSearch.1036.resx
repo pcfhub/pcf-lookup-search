@@ -200,7 +200,7 @@
     <value>Afficher comme</value>
   </data>
   <data name="displayMode_Desc" xml:space="preserve">
-    <value>Recherche trouve les enregistrements pendant la saisie. Liste déroulante affiche à l’ouverture les lignes de la vue définie sur cette colonne (ou de la vue de recherche par défaut de la table) et les filtre pendant la saisie.</value>
+    <value>Recherche trouve les enregistrements pendant la saisie. Liste déroulante affiche à l’ouverture les lignes d’une vue — celle nommée dans Vue de la liste déroulante, ou la vue de recherche par défaut de la table — et les filtre pendant la saisie.</value>
   </data>
   <data name="displayMode_Search_Name" xml:space="preserve">
     <value>Recherche</value>
@@ -225,5 +225,14 @@
   </data>
   <data name="LookupSearch_ListUnavailable" xml:space="preserve">
     <value>Aucune vue n’a pu être lue pour cette colonne ; elle effectue donc une recherche pendant la saisie.</value>
+  </data>
+  <data name="dropdownView_Name" xml:space="preserve">
+    <value>Vue de la liste déroulante</value>
+  </data>
+  <data name="dropdownView_Desc" xml:space="preserve">
+    <value>Facultatif. La vue affichée par une liste déroulante : le nom ou l’ID d’une vue système de la table vers laquelle pointe cette colonne. Vide, c’est la vue de recherche par défaut de la table.</value>
+  </data>
+  <data name="LookupSearch_ListViewMissing" xml:space="preserve">
+    <value>La vue « {0} » n’a pas pu être lue ; ce champ effectue donc une recherche pendant la saisie. Vérifiez Vue de la liste déroulante.</value>
   </data>
 </root>

@@ -255,9 +255,72 @@ form can answer.
 - **P6 — not measurable here.** The environment has 25 active contacts; the
   first request took 3,057 ms (cold), the next 121–304 ms. A 500-row list is
   timed in the rig instead.
-- **P1 — `getViewId()` on this field control: pending, on the form.** The
-  placement on Primary Contact sets no `DefaultViewId` (read from the form XML
-  2026-10-13), so the first reading is the "left alone" case.
+- **P1 — `getViewId()` on a field control names no view, set or not.**
+  Read on the form 2026-10-13 from 0.2.10's own requests, which read a view by
+  id whenever `getViewId()` names one. *Left alone* — Currency, no view on
+  the column — no `savedqueries(<id>)` read was sent and the list came from
+  the lookup view. *Set* — Primary Contact with `<DefaultViewId>` patched to
+  *Inactive Contacts* and published; the Client API's
+  `getControl('primarycontactid').getDefaultView()` answered
+  `{00000000-0000-0000-00AA-000010001033}` — and still no read by id, and the
+  25 **active** contacts listed. So "the view set on the column" went the wrong
+  way, and by the rule it is removed from what the control promises: the
+  docs say the table's default lookup view, and a maker who wants another
+  names it in a new **Dropdown view** property (name or GUID). `getViewId()` is
+  still asked, second, for a host that answers it — it costs nothing when it
+  does not. The same reading means Browse's `defaultViewId` has been empty on
+  this host all along; the overview no longer says Browse opens on the
+  configured view.
+
+## What the form settled for 0.3.0
+
+Walked on the test environment's account form, 2026-10-13, build 0.2.10, two
+placements: **Currency** (`transactioncurrencyid`, dropdown, secondary
+`isocurrencycode`, no Browse) bound with `ppdev form control bind`, and the
+existing **Primary Contact** placement switched to dropdown by patching the
+published form XML.
+
+- **The dropdown opens on click, with the chevron, and lists the view.**
+  Currency: *US Dollar* with *USD* on the second line. The one list request:
+  the lookup view's FetchXML with its six attributes swapped for three, its
+  `<order>` kept, `count='101'`.
+- **Typing filters without asking the server.** `acme` narrowed 25 contacts to
+  Ann Acme and Anya Acme; the network log held exactly one `contacts?fetchXml=`
+  request for the whole session.
+- **The keyboard chooses.** Down then Enter picked Anya Acme; the chip
+  rendered and `getAttribute('primarycontactid').getValue()` held her
+  (`{B5EF9F52-…}`). The save was refused by the form's own required fields
+  (Main Phone, Parent Account), not by the control — the write-back is the
+  0.2.0 path whose save was measured then.
+- **A parent changed on the form narrows the dropdown before any save.**
+  Parent Account set to *PCF Test - Acme* through the Client API: "Filtered by
+  PCF Test - Acme" under the field, Browse gone, and the reopened list read
+  again and held Ann Acme and Anya Acme only.
+- **A long list was placed beside the field — fixed in two steps.** 25 rows
+  did not fit above or below, and Fluent's positioning put the listbox over
+  the form's other column. With `overflow-y: auto` (0.2.11) it opened below
+  and scrolled, but ran to the bottom of the window: the positioning writes
+  the room left as an **inline** `max-height` (`614px` read from the style
+  attribute), which outranks any stylesheet rule. `max-height: min(320px,
+  45vh) !important` — injected on the live form before it shipped — gave a
+  320 px list below the field, scrolling.
+
+Build 0.2.11 added **Dropdown view**, because of P1, and was walked the same
+evening on Primary Contact:
+
+- **A named view is the one listed.** `Inactive Contacts` with *Dropdown
+  rows* 5: Charles Llamas, Charles Llamas, Charles Llamas de la Cruz, don
+  ramon, jose lopez — inactive contacts, in the view's order — and *Showing
+  the first 5. Type to narrow the list, or narrow the view.* at the end.
+- **A misspelt one is named back, and the field searches.** `Inactive
+  Contactz`: *The view "Inactive Contactz" could not be read, so this field
+  searches as you type instead. Check Dropdown view.*, the chevron gone, and
+  `ann` found Ann Acme, Paul Cannon and Scott Konersmann through the
+  placement's own search columns. No lookup view was listed in its place.
+
+The form was put back afterwards: Primary Contact in search mode with no
+view set; the Currency dropdown stays on the test form as a placement to look
+at.
 
 ## Not verified
 
@@ -271,9 +334,10 @@ form can answer.
 - **The record link on the chip.** The chip itself has been seen on a form —
   rendered from a value the platform supplied — but `navigation.openForm` behind
   the record name has never been clicked.
-- **Browse.** `lookupObjects` opening at all, and opening on the `defaultViewId`
-  taken from `getViewId()`. Seen *hidden* while filtered and back once the
-  parent was emptied; never clicked.
+- **Browse.** `lookupObjects` opening at all. Seen *hidden* while filtered and
+  back once the parent was emptied; never clicked. Its `defaultViewId` is
+  empty on a field control, now that P1 is measured, so whatever view it opens
+  on is the platform's choice.
 - **The demo presets' bound value shape.** `"value": [{ id, name, entityType }]`
   assumes the harness builds a usable property from an array of plain objects.
   If it does not, the default preset renders as empty and the demo says nothing
@@ -282,9 +346,19 @@ form can answer.
   string filters, and `encodeURIComponent` turns a typed `%` into `%25`. Whether
   that arrives as a literal percent or as a wildcard is untested; a user typing
   `50%` is the case that would show it.
-- **The `Combobox` by keyboard.** A pick with the pointer is now settled (see
-  above). Choosing with the arrow keys and Enter, and focus returning to the
-  field afterwards, are not.
+- **The `Combobox` by keyboard, in search mode.** Down and Enter chose a
+  record in **dropdown** mode on the form (0.3.0 walkthrough); the type-ahead
+  has not been driven that way, nor focus returning to the field afterwards.
+- **Dropdown mode on a phone, in another language, or with a screen reader.**
+  The web client in English, in the browser pane, is where every 0.3.0 claim
+  was checked.
+- **A view with a link-entity filter, and a list near the 500 ceiling.** Both
+  are asserted against the rig (the link stays, the ceiling clamps), and P3
+  ran a stripped link-entity on the server; neither was opened in a dropdown
+  on the form, whose largest table here has 25 active rows.
+- **A personal view named in Dropdown view.** `userquery` is read after
+  `savedquery` for a GUID, as `lib/view-aggregate` does; a *name* is matched
+  against system views only.
 
 ## What the template assumed
 

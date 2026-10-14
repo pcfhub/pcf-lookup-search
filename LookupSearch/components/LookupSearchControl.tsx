@@ -42,6 +42,8 @@ export interface ILookupStrings {
     listTruncated: string;
     /** Dropdown mode could not read a view, so the field searches instead. */
     listUnavailable: string;
+    /** Carries a `{0}` for the view named in Dropdown view, which could not be read. */
+    listViewMissing: string;
 }
 
 export interface IProps {
@@ -538,9 +540,12 @@ export function LookupSearchControl(props: IProps): React.ReactElement | null {
 
         // Asked for a dropdown and searching instead: say so, or the maker
         // reads a type-ahead as the dropdown not having been configured.
-        return props.mode === 'dropdown' && listed?.kind === 'unavailable' && failure === null
-            ? strings.listUnavailable
-            : '';
+        if (props.mode !== 'dropdown' || listed?.kind !== 'unavailable' || failure !== null) {
+            return '';
+        }
+
+        // A view the maker named is a configuration they can fix, so it is named back.
+        return listed.view ? format(strings.listViewMissing, listed.view) : strings.listUnavailable;
     };
 
     // Said only while choosing: once a record is chosen the filter has nothing

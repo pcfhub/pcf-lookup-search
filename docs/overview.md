@@ -39,7 +39,7 @@ and writing the chosen record straight back to the column.
   type. The view decides what is listed, so a value you deactivate leaves the
   list: the lookup view's own *active records only* does it.
 - **It does not replace the platform panel, it keeps it.** The Browse button
-  opens the environment's own lookup dialog, on the view the maker configured
+  opens the environment's own lookup dialog
   for the column. When the search box cannot find something, the way out is one
   click rather than a different control.
 

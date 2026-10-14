@@ -7,7 +7,7 @@
   -->
   <control namespace="PCFHub"
            constructor="LookupSearch"
-           version="0.2.9"
+           version="0.3.0"
            display-name-key="LookupSearch_Name"
            description-key="LookupSearch_Desc"
            control-type="virtual">
@@ -190,9 +190,8 @@
     <!--
       0.3.0. `search` is the type-ahead, and the default, so a form placed
       under 0.2.x upgrades into exactly what it had. `dropdown` lists the rows
-      of a view on open — the view set on this column in the form designer,
-      else the table's default lookup view — and filters them as the user
-      types. The PCF Gallery request board's most-voted topic, for reference
+      of a view on open — the one named in dropdownView, else the table's
+      default lookup view — and filters them as the user types. The PCF Gallery request board's most-voted topic, for reference
       data such as countries, where retiring a value should take it out of
       the list: a lookup view already filters to active rows.
     -->
@@ -212,6 +211,20 @@
       1..500 in code: a dropdown of thousands is a search, and the type-ahead is
       still there for it.
     -->
+    <!--
+      Which view a dropdown lists: a system view of the target table, by its
+      display name or its GUID. Optional — empty is the table's default lookup
+      view. It has to be named here because the view set on the column in the
+      form designer does not reach a field control: measured 2026-10-13 on the
+      test form, `getViewId()` named nothing with a view set on the column.
+    -->
+    <property name="dropdownView"
+              display-name-key="dropdownView_Name"
+              description-key="dropdownView_Desc"
+              of-type="SingleLine.Text"
+              usage="input"
+              required="false" />
+
     <property name="dropdownLimit"
               display-name-key="dropdownLimit_Name"
               description-key="dropdownLimit_Desc"

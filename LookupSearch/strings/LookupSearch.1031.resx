@@ -200,7 +200,7 @@
     <value>Anzeigen als</value>
   </data>
   <data name="displayMode_Desc" xml:space="preserve">
-    <value>Suche findet Datensätze während der Eingabe. Dropdown listet beim Öffnen die Zeilen der für diese Spalte festgelegten Ansicht (oder der Standard-Nachschlageansicht der Tabelle) auf und filtert sie während der Eingabe.</value>
+    <value>Suche findet Datensätze während der Eingabe. Dropdown listet beim Öffnen die Zeilen einer Ansicht auf – der unter „Dropdown-Ansicht“ genannten oder der Standard-Nachschlageansicht der Tabelle – und filtert sie während der Eingabe.</value>
   </data>
   <data name="displayMode_Search_Name" xml:space="preserve">
     <value>Suche</value>
@@ -225,5 +225,14 @@
   </data>
   <data name="LookupSearch_ListUnavailable" xml:space="preserve">
     <value>Für diese Spalte konnte keine Ansicht gelesen werden, daher wird stattdessen während der Eingabe gesucht.</value>
+  </data>
+  <data name="dropdownView_Name" xml:space="preserve">
+    <value>Dropdown-Ansicht</value>
+  </data>
+  <data name="dropdownView_Desc" xml:space="preserve">
+    <value>Optional. Die Ansicht, die ein Dropdown auflistet: Name oder ID einer Systemansicht der Tabelle, auf die diese Spalte verweist. Leer listet die Standard-Nachschlageansicht der Tabelle auf.</value>
+  </data>
+  <data name="LookupSearch_ListViewMissing" xml:space="preserve">
+    <value>Die Ansicht „{0}“ konnte nicht gelesen werden, daher wird stattdessen während der Eingabe gesucht. Prüfen Sie „Dropdown-Ansicht“.</value>
   </data>
 </root>

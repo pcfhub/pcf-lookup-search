@@ -200,7 +200,7 @@
     <value>Display as</value>
   </data>
   <data name="displayMode_Desc" xml:space="preserve">
-    <value>Search finds records as you type. Dropdown lists the rows of the view set on this column (or the table's default lookup view) when opened, and filters them as you type.</value>
+    <value>Search finds records as you type. Dropdown lists the rows of a view when opened — the one named in Dropdown view, or the table's default lookup view — and filters them as you type.</value>
   </data>
   <data name="displayMode_Search_Name" xml:space="preserve">
     <value>Search</value>
@@ -225,5 +225,14 @@
   </data>
   <data name="LookupSearch_ListUnavailable" xml:space="preserve">
     <value>No view could be read for this column, so it searches as you type instead.</value>
+  </data>
+  <data name="dropdownView_Name" xml:space="preserve">
+    <value>Dropdown view</value>
+  </data>
+  <data name="dropdownView_Desc" xml:space="preserve">
+    <value>Optional. The view a dropdown lists: the name or ID of a system view of the table this column points at. Empty lists the table's default lookup view.</value>
+  </data>
+  <data name="LookupSearch_ListViewMissing" xml:space="preserve">
+    <value>The view "{0}" could not be read, so this field searches as you type instead. Check Dropdown view.</value>
   </data>
 </root>

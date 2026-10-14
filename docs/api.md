@@ -79,8 +79,12 @@ row comes back.
 placed before 0.3.0 keeps the type-ahead. `dropdown` lists a view's rows when
 the field is first opened and filters them in the browser as the user types,
 in the order they came — nothing is sent per keystroke. The view is the one
-`getViewId()` names when it is this table's, else the table's default lookup
-view (`savedquery`, `querytype eq 64`, `isdefault eq true`). Its FetchXML is
+`dropdownView` names (a GUID read from `savedquery` then `userquery`; anything
+else matched against `savedquery.name` for the table), and only that one when
+it is set; else the one `getViewId()` names, which on a field control was
+nothing even with a view set on the column (measured 2026-10-13); else the
+table's default lookup view (`savedquery`, `querytype eq 64`, `isdefault eq
+true`). Its FetchXML is
 sent with every `<attribute>` replaced by the primary key, the primary name
 and `secondaryColumn`; its `<filter>`, `<link-entity>` and `<order>` stay, a
 parent goes in as a second sibling `<filter>`, and `count` is

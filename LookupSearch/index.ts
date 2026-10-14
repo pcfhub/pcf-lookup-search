@@ -26,7 +26,10 @@ import {
     listFetchXml,
     listQuery,
     ListResult,
+    NamedView,
+    namedViewQuery,
     readList,
+    readNamedView,
     ViewSource,
 } from './components/list';
 import { readViewFetchXml, WebApiReader } from './lib/view-aggregate/aggregate';
@@ -537,6 +540,7 @@ export class LookupSearch implements ComponentFramework.ReactControl<IInputs, IO
         return [
             this.target,
             this.resolveViewId(parameters.value),
+            (parameters.dropdownView?.raw ?? '').trim(),
             this.parentKey(),
             clampLimit(parameters.dropdownLimit?.raw),
             (parameters.secondaryColumn.raw ?? '').trim().toLowerCase(),
@@ -556,12 +560,14 @@ export class LookupSearch implements ComponentFramework.ReactControl<IInputs, IO
     /**
      * Dropdown mode: the rows of a view, read once.
      *
-     * **Which view, in order.** The one configured on the form for this column,
-     * if `getViewId()` names one that is this table's; otherwise the table's
-     * default *lookup* view — the one the platform's own lookup opens with,
-     * filtered to active rows and ordered by name on contact (probe 0.2.9 P2).
-     * Neither readable is `unavailable`, and the component goes back to the
-     * type-ahead. **Never the bare table**: a list that silently includes
+     * **Which view, in order.** The one *Dropdown view* names, and only that
+     * one when it is set. Otherwise the one `getViewId()` names, if it does —
+     * on a field control it named nothing even with a view set on the column
+     * (0.2.10 on the test form), so this is kept for a host that answers, not
+     * relied on. Otherwise the table's default *lookup* view — the one the
+     * platform's own lookup opens with, filtered to active rows and ordered by
+     * name on contact (probe 0.2.9 P2). None readable is `unavailable`, and
+     * the component goes back to the type-ahead. **Never the bare table**: a list that silently includes
      * every retired value is the one thing a dropdown over reference data must
      * not do.
      *
@@ -592,6 +598,21 @@ export class LookupSearch implements ComponentFramework.ReactControl<IInputs, IO
         const limit = clampLimit(parameters.dropdownLimit?.raw);
         const constraint = parent.kind === 'filtered' ? parent : null;
 
+        // A view the maker named is that view or nothing: listing another one
+        // in its place would show what the name was chosen to leave out.
+        const named = readNamedView(parameters.dropdownView?.raw);
+
+        if (named !== null) {
+            const view = await this.namedView(target, named);
+            const xml = view !== null ? listFetchXml(view, columns, target, limit, constraint) : null;
+
+            if (xml === null) {
+                return { kind: 'unavailable', view: (parameters.dropdownView?.raw ?? '').trim() };
+            }
+
+            return this.listRows(target, xml, columns, limit, 'named');
+        }
+
         let source: ViewSource = 'field';
         const fieldView = await readViewFetchXml(webAPI as unknown as WebApiReader, this.resolveViewId(parameters.value));
         let xml = fieldView !== null ? listFetchXml(fieldView, columns, target, limit, constraint) : null;
@@ -605,10 +626,37 @@ export class LookupSearch implements ComponentFramework.ReactControl<IInputs, IO
             return { kind: 'unavailable' };
         }
 
-        const response = await webAPI.retrieveMultipleRecords(target, listQuery(xml));
+        return this.listRows(target, xml, columns, limit, source);
+    }
+
+    private async listRows(target: string, xml: string, columns: QueryColumns, limit: number, source: ViewSource): Promise<ListResult> {
+
+        const response = await this.context.webAPI.retrieveMultipleRecords(target, listQuery(xml));
         const { candidates, truncated } = readList(toCandidates(response.entities, columns), limit);
 
         return { kind: 'rows', source, candidates, truncated };
+    }
+
+    /** The view *Dropdown view* names, by id or by name; `null` when it cannot be read. */
+    private async namedView(target: string, named: Exclude<NamedView, null>): Promise<string | null> {
+        if (named.kind === 'id') {
+            return readViewFetchXml(this.context.webAPI as unknown as WebApiReader, named.id);
+        }
+
+        const query = namedViewQuery(target, named.name);
+
+        if (query === null) {
+            return null;
+        }
+
+        try {
+            const answer = await this.context.webAPI.retrieveMultipleRecords('savedquery', query, 1);
+            const view = answer.entities[0]?.fetchxml;
+
+            return typeof view === 'string' ? view : null;
+        } catch {
+            return null;
+        }
     }
 
     /** The table's default lookup view, rewritten; `null` when there is none to read. */
@@ -717,6 +765,7 @@ export class LookupSearch implements ComponentFramework.ReactControl<IInputs, IO
             listEmpty: get('LookupSearch_ListEmpty'),
             listTruncated: get('LookupSearch_ListTruncated'),
             listUnavailable: get('LookupSearch_ListUnavailable'),
+            listViewMissing: get('LookupSearch_ListViewMissing'),
         };
     }
 }

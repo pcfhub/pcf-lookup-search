@@ -21,8 +21,8 @@ order: 7
   a fixed condition such as *active records only* are not supported by the
   **search**; `context.webAPI` takes no form context of its own, and the
   parent is the one value the platform hands the control. A **dropdown** does
-  honour a fixed condition — it lists a view, filter and all — and a view with
-  the filter built in, set on the column, narrows what **Browse** shows.
+  honour a fixed condition — it lists a view, filter and all, named in
+  **Dropdown view**.
 
 - **Browse is hidden while a parent filters the search.** The framework's
   `lookupObjects` — unlike the Client API's version of the same call — has no
@@ -68,9 +68,16 @@ order: 7
   again only when the parent it is filtered by changes. A record added while
   the form is open appears after the form is reloaded.
 
-- **A dropdown lists a view, never the bare table.** When neither the
-  column's view nor the table's default lookup view can be read, the field says
-  so and searches as you type instead. Listing the table would offer every
+- **The view set on the column in the form designer is not what a dropdown
+  lists.** It does not reach a field control — measured with a view set, the
+  control was told of none — so the view is named in *Dropdown view* instead.
+
+- **Dropdown view matches a system view by name.** A personal view can be
+  named by its ID, not by its name.
+
+- **A dropdown lists a view, never the bare table.** When neither the view
+  named in Dropdown view nor the table's default lookup view can be read, the
+  field says so and searches as you type instead. Listing the table would offer every
   record a view exists to keep out — retired values first among them.
 
 - **The demo on this page cannot search, nor show a dropdown.** Nothing behind

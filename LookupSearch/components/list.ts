@@ -32,13 +32,21 @@ export function clampLimit(raw: number | null | undefined): number {
     return Math.min(LIST_CEILING, Math.max(1, Math.floor(raw)));
 }
 
-/** Which view a list came from, so the docs and the suite can say which. */
-export type ViewSource = 'field' | 'lookup';
+/**
+ * Which view a list came from, so the docs and the suite can say which:
+ * the one the maker named in *Dropdown view*, the one `getViewId()` names, or
+ * the table's default lookup view.
+ */
+export type ViewSource = 'named' | 'field' | 'lookup';
 
-/** What the list resolves with. `unavailable` turns the field back into the type-ahead. */
+/**
+ * What the list resolves with. `unavailable` turns the field back into the
+ * type-ahead; `view` is set when it was a view the maker *named* that could
+ * not be read, so the field can say which.
+ */
 export type ListResult =
     | { kind: 'rows'; source: ViewSource; candidates: Candidate[]; truncated: boolean }
-    | { kind: 'unavailable' };
+    | { kind: 'unavailable'; view?: string };
 
 /**
  * The view's FetchXML, rewritten to list its rows.
@@ -137,6 +145,44 @@ export function filterLoaded(candidates: Candidate[], typed: string): Candidate[
 
     return candidates.filter((c) =>
         c.name.toLocaleLowerCase().includes(term) || c.secondary.toLocaleLowerCase().includes(term));
+}
+
+/**
+ * *Dropdown view* as the maker typed it: a view's GUID, or its name.
+ *
+ * **Why the maker has to name it.** The view set on the column in the form
+ * designer does not reach a field control: measured on the test form
+ * 2026-10-13 (0.2.10), with *Inactive Contacts* set as the column's default
+ * view — the Client API's `getDefaultView()` answered it — `getViewId()`
+ * named nothing, no view was read, and the list was the lookup view's.
+ */
+export type NamedView = { kind: 'id'; id: string } | { kind: 'name'; name: string } | null;
+
+export function readNamedView(raw: string | null | undefined): NamedView {
+    const text = (raw ?? '').trim();
+
+    if (text === '') {
+        return null;
+    }
+
+    return isGuid(text) ? { kind: 'id', id: bareId(text) } : { kind: 'name', name: text };
+}
+
+/**
+ * A system view of `target` by its display name, as the options for one
+ * `savedquery` read. The name is free text from a maker, so a quote is
+ * doubled for the OData literal and the whole filter encoded — the two rules
+ * `search.ts` applies to a typed term, in the same order.
+ */
+export function namedViewQuery(target: string, name: string): string | null {
+    if (!isLogicalName(target) || name === '') {
+        return null;
+    }
+
+    const literal = name.replace(/'/g, "''");
+    const filter = encodeURIComponent(`returnedtypecode eq '${target}' and name eq '${literal}'`);
+
+    return `?$select=savedqueryid,fetchxml&$filter=${filter}`;
 }
 
 /**

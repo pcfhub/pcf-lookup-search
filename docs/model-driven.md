@@ -28,8 +28,8 @@ tables. Both are polymorphic, and this control searches a single table.
 :::callout{type=info}
 The **view** the column is configured with on the form is not used for the
 type-ahead — that is a Dataverse query, not a view — but it *is* what the
-**Browse** panel opens on, and from 0.3.0 it is the list a **dropdown** shows.
-So the view still decides what a user sees, and it is worth setting.
+**Browse** panel is meant to open on. A **dropdown** does not list it — name
+the view in **Dropdown view** for that (below).
 :::
 
 ## Configuration
@@ -46,6 +46,7 @@ as text:
 | `Maximum results` | `8` | How many matches the list shows. |
 | `Allow browse` | `Yes` | Whether the platform lookup panel is offered beside the search box. |
 | `Display as` | `Search` | `Dropdown` lists a view's rows when the field is opened — see below. |
+| `Dropdown view` | `Active Contacts` | The view a dropdown lists, by name or ID. Empty is the table's default lookup view. |
 | `Dropdown rows` | `100` | How many rows a dropdown lists, 1 to 500. |
 
 Use **logical names**, not display names — `emailaddress1`, not *Email*. A name
@@ -61,16 +62,27 @@ up: countries, categories, regions, product families.
 
 :::steps
 1. Set **Display as** to **Dropdown**.
-2. Optionally set **Dropdown rows** (default 100, at most 500).
+2. Optionally set **Dropdown view** (which view to list) and **Dropdown
+   rows** (default 100, at most 500).
 3. Save and publish. Opening the field lists the rows; typing narrows them.
 :::
 
 **Which rows, in which order.** The rows come from a view, never from the
 whole table:
 
-1. the view set for this column in the form designer, if there is one;
+1. the view named in **Dropdown view** — a system view of the table the
+   column points at, by its name (*Active Contacts*) or its ID — when it is set;
 2. otherwise the table's **default lookup view** — the one the platform's own
    lookup opens with.
+
+:::callout{type=info}
+**The view you choose for the column in the form designer is not the one
+listed.** It does not reach a code component on a field: measured on a test
+form, with a view set on the column, the control was told of no view at all.
+Name the view in **Dropdown view** instead. A view named there that cannot be
+read — misspelt, deleted, or another table's — is not replaced by another:
+the field names it and searches as you type until it is fixed.
+:::
 
 The view's filter and its sort order are kept as they are. A table's lookup
 view normally shows **active records only**, so a value you deactivate leaves
@@ -82,8 +94,8 @@ saying how many it shows; typing still narrows only what was listed. A table
 with thousands of records is a search, not a dropdown, and Display as →
 Search is still there for it.
 
-**When no view can be read** — the field's view was deleted, or the user
-cannot read it, and the table has no default lookup view — the field says so
+**When no view can be read** — the view named in Dropdown view is not there
+or not readable, or the table has no default lookup view — the field says so
 under the box and **searches as you type instead**, so it keeps working.
 
 **Filter by** narrows a dropdown exactly as it narrows a search: only the

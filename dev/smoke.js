@@ -721,6 +721,52 @@ check('and none at all where it cannot', mount({ hasNavigation: false }).props()
     check('which is asked for by querytype 64 and isdefault', noView.calls().some((call) => call.includes('savedquery') && decodeURIComponent(call).includes("returnedtypecode eq 'contact' and querytype eq 64 and isdefault eq true")), noView.calls().filter((c) => c.includes('savedquery')).join(' | '));
     check('in its order', JSON.stringify(names(noViewList)) === JSON.stringify(['Andy Globex', 'Ann Acme', 'Anya Acme']), names(noViewList).join(', '));
 
+    /*
+     * Dropdown view. The column's own view does not reach a field control
+     * (0.2.10 on the test form: getViewId() named nothing with a view set),
+     * so a maker who wants another view names it — and gets that view or a
+     * message, never a different one.
+     */
+    const NAMED_ID = '00000000-0000-0000-00aa-0000000000bb';
+    const NAMED = { savedqueryid: NAMED_ID, name: 'Acme last first', returnedtypecode: 'contact', querytype: 0, isdefault: false, fetchxml: viewXml('desc') };
+    const onNamed = (dropdownView, rows = [NAMED, LOOKUP]) => onViews({ viewId: null, fixture: views(rows), inputs: { dropdownView } });
+
+    const byName = mount(onNamed('Acme last first'));
+    const byNameList = await byName.props().list();
+
+    check('Dropdown view, by name, is the view listed', byNameList.kind === 'rows' && byNameList.source === 'named', JSON.stringify({ kind: byNameList.kind, source: byNameList.source }));
+    check('in its order', JSON.stringify(names(byNameList)) === JSON.stringify(['Anya Acme', 'Ann Acme', 'Andy Globex']), names(byNameList).join(', '));
+    check(
+        'asked for by name and table',
+        byName.calls().some((call) => decodeURIComponent(call).includes("returnedtypecode eq 'contact' and name eq 'Acme last first'")),
+        byName.calls().filter((c) => c.includes('savedquery')).join(' | '),
+    );
+
+    const byId = await mount(onNamed(`{${NAMED_ID.toUpperCase()}}`)).props().list();
+
+    check('and by id, braced and upper-case as a maker may paste it', byId.kind === 'rows' && byId.source === 'named', JSON.stringify({ kind: byId.kind, source: byId.source }));
+
+    const missing = mount(onNamed('No such view'));
+    const missingList = await missing.props().list();
+
+    check('a named view that is not there is unavailable, naming it', missingList.kind === 'unavailable' && missingList.view === 'No such view', JSON.stringify(missingList));
+    check(
+        'and the lookup view is not listed in its place',
+        !missing.calls().some((call) => decodeURIComponent(call).includes('querytype eq 64')) && listQueries(missing).length === 0,
+        missing.calls().join(' | '),
+    );
+
+    const quotedName = mount(onNamed("Bob's contacts"));
+    await quotedName.props().list();
+
+    check(
+        'a quote in the name is doubled for the OData literal',
+        quotedName.calls().some((call) => decodeURIComponent(call).includes("name eq 'Bob''s contacts'")),
+        quotedName.calls().filter((c) => c.includes('savedquery')).join(' | '),
+    );
+
+    check('and Dropdown view is part of the list key', mount(onNamed('A')).props().listKey !== mount(onNamed('B')).props().listKey);
+
     const gone = await mount(onViews({ viewId: '00000000-0000-0000-00aa-00000000dead' })).props().list();
 
     check('a view id that resolves to nothing falls to the lookup view', gone.kind === 'rows' && gone.source === 'lookup', JSON.stringify({ kind: gone.kind, source: gone.source }));

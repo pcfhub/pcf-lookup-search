@@ -111,6 +111,7 @@ country, deactivate the record: the lookup view lists active records only, so
 it leaves the dropdown, while an account that already points at it keeps the
 value and still shows it.
 
-To list something other than the lookup view, set a view on the column in the
-form designer — a *Countries in the EU* view lists just those, in its own
-order.
+To list something other than the lookup view, name a view in **Dropdown
+view** — `Countries in the EU` lists just those, in that view's own order. The
+view chosen for the column in the form designer is not the one listed: it does
+not reach a code component on a field.

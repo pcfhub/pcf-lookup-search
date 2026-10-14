@@ -200,7 +200,7 @@
     <value>表示方法</value>
   </data>
   <data name="displayMode_Desc" xml:space="preserve">
-    <value>[検索] は入力に合わせてレコードを検索します。[ドロップダウン] は開いたときにこの列に設定されたビュー (またはテーブルの既定の検索ビュー) の行を一覧表示し、入力に合わせて絞り込みます。</value>
+    <value>[検索] は入力に合わせてレコードを検索します。[ドロップダウン] は開いたときにビュー ([ドロップダウンのビュー] で指定したビュー、またはテーブルの既定の検索ビュー) の行を一覧表示し、入力に合わせて絞り込みます。</value>
   </data>
   <data name="displayMode_Search_Name" xml:space="preserve">
     <value>検索</value>
@@ -225,5 +225,14 @@
   </data>
   <data name="LookupSearch_ListUnavailable" xml:space="preserve">
     <value>この列のビューを読み取れなかったため、入力に合わせて検索します。</value>
+  </data>
+  <data name="dropdownView_Name" xml:space="preserve">
+    <value>ドロップダウンのビュー</value>
+  </data>
+  <data name="dropdownView_Desc" xml:space="preserve">
+    <value>省略可能。ドロップダウンに表示するビュー: この列が参照するテーブルのシステム ビューの名前または ID。空の場合はテーブルの既定の検索ビューを表示します。</value>
+  </data>
+  <data name="LookupSearch_ListViewMissing" xml:space="preserve">
+    <value>ビュー "{0}" を読み取れなかったため、入力に合わせて検索します。[ドロップダウンのビュー] を確認してください。</value>
   </data>
 </root>

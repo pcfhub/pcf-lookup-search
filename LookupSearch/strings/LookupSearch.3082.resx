@@ -200,7 +200,7 @@
     <value>Mostrar como</value>
   </data>
   <data name="displayMode_Desc" xml:space="preserve">
-    <value>Búsqueda encuentra registros mientras escribe. Lista desplegable muestra al abrirse las filas de la vista configurada en esta columna (o de la vista de búsqueda predeterminada de la tabla) y las filtra mientras escribe.</value>
+    <value>Búsqueda encuentra registros mientras escribe. Lista desplegable muestra al abrirse las filas de una vista (la indicada en Vista de la lista desplegable o la vista de búsqueda predeterminada de la tabla) y las filtra mientras escribe.</value>
   </data>
   <data name="displayMode_Search_Name" xml:space="preserve">
     <value>Búsqueda</value>
@@ -225,5 +225,14 @@
   </data>
   <data name="LookupSearch_ListUnavailable" xml:space="preserve">
     <value>No se pudo leer ninguna vista para esta columna, así que busca mientras escribe.</value>
+  </data>
+  <data name="dropdownView_Name" xml:space="preserve">
+    <value>Vista de la lista desplegable</value>
+  </data>
+  <data name="dropdownView_Desc" xml:space="preserve">
+    <value>Opcional. La vista que muestra una lista desplegable: el nombre o el id. de una vista del sistema de la tabla a la que apunta esta columna. Vacío muestra la vista de búsqueda predeterminada de la tabla.</value>
+  </data>
+  <data name="LookupSearch_ListViewMissing" xml:space="preserve">
+    <value>No se pudo leer la vista "{0}", así que este campo busca mientras escribe. Revise Vista de la lista desplegable.</value>
   </data>
 </root>

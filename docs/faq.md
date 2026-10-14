@@ -29,14 +29,14 @@ By another **lookup**, yes, from 0.2.0: map **Filter by** to it, and the
 search offers only records related to the parent. See
 [Model-driven apps](model-driven.md#filtering-by-a-parent-column). A Choice
 column or a fixed condition such as *active records only* is not supported by
-the search; for those, a view with the filter built in, set on the column,
-narrows what **Browse** shows — and what a **dropdown** lists.
+the search; for those, a view with the filter built in narrows what a
+**dropdown** lists, named in **Dropdown view**.
 
 ## Can it be a dropdown instead of a search?
 
 Yes, from 0.3.0: set **Display as** to **Dropdown**. Opening the field lists
-the rows of the view set on the column (or the table's default lookup view),
-in that view's order, and typing narrows them. It suits short reference
+the rows of the table's default lookup view — or of the view named in
+**Dropdown view** — in that view's order, and typing narrows them. It suits short reference
 tables — countries, categories — and deactivating a record takes it out of the
 list, because a lookup view lists active records. See
 [Model-driven apps](model-driven.md#showing-it-as-a-dropdown).
