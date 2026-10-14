@@ -216,8 +216,9 @@
  * 2026-10-13 (0.2.10): a dropdown of 25 contacts is taller than the room above
  * or below the field, and Fluent's positioning then placed the whole list
  * *beside* the field, over the form's other column. A list that fits below is
- * the one a dropdown is expected to show; the type-ahead's eight rows are
- * well under this and unaffected.
+ * the one a dropdown is expected to show. Dropdown only: on 0.3.0's first
+ * build the cap applied to the type-ahead too, and eight two-line results —
+ * shown whole since 0.1.0 — gained a scrollbar.
  *
  * `!important`, because the scroll alone is what fixed the placement and the
  * height then came from Fluent: its positioning writes the room left in the
@@ -226,7 +227,7 @@
  * without it. Where less than this is left below, the positioning flips the
  * list above the field rather than shrinking it.
  */
-.LookupSearch-listbox[role="listbox"] {
+.LookupSearch-listbox--dropdown[role="listbox"] {
     max-height: min(320px, 45vh) !important;
     overflow-y: auto;
 }

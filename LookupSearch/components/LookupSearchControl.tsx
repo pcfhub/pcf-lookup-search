@@ -656,7 +656,9 @@ export function LookupSearchControl(props: IProps): React.ReactElement | null {
                         // class goes on the listbox itself instead, and the
                         // stylesheet targets it directly — still namespaced, so
                         // it cannot touch the host page.
-                        listbox={{ className: 'LookupSearch-listbox' }}
+                        // A dropdown's list is capped and scrolls; the
+                        // type-ahead's is not, as before 0.3.0.
+                        listbox={{ className: dropdown ? 'LookupSearch-listbox LookupSearch-listbox--dropdown' : 'LookupSearch-listbox' }}
                         // Anchor and size the dropdown to the whole field, not
                         // to the Combobox inside it. Without the explicit
                         // target, Fluent measures its own trigger and the

@@ -303,7 +303,13 @@ published form XML.
   the room left as an **inline** `max-height` (`614px` read from the style
   attribute), which outranks any stylesheet rule. `max-height: min(320px,
   45vh) !important` — injected on the live form before it shipped — gave a
-  320 px list below the field, scrolling.
+  320 px list below the field, scrolling. The first 0.3.0 build applied it to
+  every listbox, and on the form the **type-ahead's** eight two-line results
+  gained a scrollbar they never had; the rule is now on a
+  `LookupSearch-listbox--dropdown` class the dropdown alone adds. The test
+  environment still carries that first 0.3.0 build — a re-import at the same
+  number is ignored — so the tagged bundle's selector change was checked in
+  the build output, not on the form.
 
 Build 0.2.11 added **Dropdown view**, because of P1, and was walked the same
 evening on Primary Contact:
