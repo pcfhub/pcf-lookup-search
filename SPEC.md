@@ -351,6 +351,12 @@ click on the field reopened it. A list that flips *above* a field near the
 window's bottom still overlays the header, as any popover does — the field is
 in view then. Not reachable from the suite, which renders no DOM.
 
+**Since 2026-10-14 the close is shared**: the effect moved to
+`lib/close-when-hidden` (the template's copy), which five other controls
+adopted the same day. Behaviour unchanged for this control: its focus stays
+in the field, so the hook's focus step does nothing here. Not released on
+its own.
+
 ## Not verified
 
 - **The unmapped shape on this control.** A form with no Parent value mapped

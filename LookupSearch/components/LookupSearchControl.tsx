@@ -9,6 +9,7 @@ import {
 import { Candidate, describeError } from './search';
 import { allowsBrowse, allowsSearch, ParentState } from './parent';
 import { filterLoaded, ListResult } from './list';
+import { useCloseWhenHidden } from '../lib/close-when-hidden/useCloseWhenHidden';
 
 type LookupValue = ComponentFramework.LookupValue;
 
@@ -214,37 +215,12 @@ export function LookupSearchControl(props: IProps): React.ReactElement | null {
     }, [props.value?.id]);
 
     /*
-     * Close the list once the field scrolls out of the form.
-     *
-     * The listbox is portalled to the page and follows its field, so a form
-     * scrolled with the list open carried it up over the form's header —
-     * reported on 0.3.0 with a screenshot, measured the same evening: the
-     * header sits outside the form's scroller (`tab-section0`, from y 286),
-     * the field had scrolled to y 123, and Fluent marked the list
-     * `data-popper-reference-hidden` and drew it anyway. An
-     * IntersectionObserver answers what the positioning knew — it clips by
-     * every scrolling ancestor, and read 0 there — so the list closes when
-     * less than half the field is visible, in both modes. What was typed
-     * stays; a click opens it again. Absent in a host without the API.
+     * Close the list once the field scrolls out of the form. The listbox is
+     * portalled and follows its field, so 0.3.0 carried it up over the
+     * form's header (lib/close-when-hidden/watch.ts has the measurement).
+     * What was typed stays; a click opens it again.
      */
-    React.useEffect(() => {
-        if (!open || fieldEl === null || typeof IntersectionObserver !== 'function') {
-            return;
-        }
-
-        const observer = new IntersectionObserver(
-            (entries) => {
-                if (entries.some((entry) => entry.intersectionRatio < 0.5)) {
-                    setOpen(false);
-                }
-            },
-            { threshold: [0, 0.5, 1] },
-        );
-
-        observer.observe(fieldEl);
-
-        return () => observer.disconnect();
-    }, [open, fieldEl]);
+    useCloseWhenHidden(fieldEl, open, () => setOpen(false));
 
     // Clearing swaps the chip out for the search box, so the field that should
     // take focus does not exist until after this render.

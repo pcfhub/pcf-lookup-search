@@ -863,6 +863,42 @@ check('and none at all where it cannot', mount({ hasNavigation: false }).props()
     const { createLoader } = require('./modules.js');
     const load = createLoader({ root: path.join(root, 'LookupSearch'), forbid: [[/react|fluentui/, 'stay free of React']] });
     const list = load('components/list');
+
+    /*
+     * Closing once the field scrolls out of the form (0.3.1). The observer is
+     * a fake that records what it was asked and fires what the test says:
+     * the half that needs a browser — that an observer with no root clips by
+     * the form's scroller — was measured on the form, not here.
+     */
+    const watch = load('lib/close-when-hidden/watch');
+    const observed = [];
+    let fire = null;
+    let disconnected = 0;
+    class FakeObserver {
+        constructor(callback, options) {
+            fire = callback;
+            observed.push(options.threshold);
+        }
+        observe(target) {
+            observed.push(target);
+        }
+        disconnect() {
+            disconnected += 1;
+        }
+    }
+    let hidden = 0;
+    const stopWatching = watch.watchAnchor('field', () => (hidden += 1), FakeObserver);
+
+    fire([{ intersectionRatio: 0.6 }]);
+    check('a field more than half in view keeps the list open', hidden === 0);
+    fire([{ intersectionRatio: 0.49 }]);
+    check('less than half in view closes it', hidden === 1);
+    fire([{ intersectionRatio: 0 }]);
+    check('and a field gone in one jump closes it too', hidden === 2 && JSON.stringify(observed[0]) === '[0,0.5,1]', JSON.stringify(observed[0]));
+    stopWatching();
+    check('the watch is on the field, and stops when the list closes', observed[1] === 'field' && disconnected === 1);
+    check('a host without IntersectionObserver leaves the list as it was', typeof watch.watchAnchor('field', () => (hidden += 1), undefined) === 'function' && hidden === 2);
+
     const rows = [
         { id: '1', name: 'Finland', secondary: 'FI' },
         { id: '2', name: 'France', secondary: 'FR' },
