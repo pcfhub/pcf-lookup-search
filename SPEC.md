@@ -212,6 +212,53 @@ asked)**, and a Linking column with no Filter by mapped is a state of its own,
 that one state changed; the property names are the same, so a form configured
 under the old labels keeps its settings.
 
+## Probe 0.2.9: what a dropdown rests on
+
+Asked before 0.3.0 was written, because the PCF Gallery request board's
+most-voted topic (30 votes, read 2026-10-13) is "render a lookup as a
+dropdown", and every part of the answer rests on platform behaviour this
+repository had not watched. The rule stated up front: an answer that goes the
+wrong way removes what depends on it.
+
+P2–P5 were measured on 2026-10-13 against the test environment's Web API with
+the same FetchXML the probe sends through `context.webAPI` — the server's
+answer does not depend on which client asks. P1 is the one question only the
+form can answer.
+
+- **P2 — the table's default lookup view is one row and carries the
+  filter the request asks for.** `savedqueries?$filter=returnedtypecode eq
+  'contact' and querytype eq 64` answered exactly one view, *Contacts Lookup
+  View*, `isdefault: true`, whose FetchXML is ten `<attribute>`s, a
+  `<filter>` on `statecode eq 0` and `<order attribute="fullname">`. So
+  "retire a value and it leaves the list" is the platform's own lookup view
+  doing what it already does, not something this control adds.
+- **P3 — the view rewritten runs, in the view's order, and `count` is the
+  limit.** Every `<attribute>` removed and three put back (`contactid`,
+  `fullname`, `emailaddress1`), the `<filter>` and `<order>` untouched,
+  `count="6"`: 6 rows, `@Microsoft.Dynamics.CRM.morerecords: true` and a
+  paging cookie. At `count="501"` all 25 active contacts, `morerecords`
+  absent. The order is the server's collation — case-insensitive, `charles`
+  between `asasadsdas` and `Charles Ll` — and `descending="true"` reverses it.
+  So the client must **keep the server's order** and filter without
+  re-sorting; a JavaScript sort disagrees with SQL's on ties of case.
+  Truncation is read as *one row more than the limit came back*, which needs
+  no annotation. A `<link-entity>` whose own `<attribute>` was removed still
+  runs (left as an empty element), so stripping at every depth is safe.
+- **P4 — a deactivated row is not listed.** Ten inactive contacts in the
+  environment, none of them among the 25 the rewritten view returned, which is
+  every active one.
+- **P5 — a parent condition as a second sibling `<filter>` narrows the
+  view.** `parentcustomerid eq` *PCF Test - Acme* beside the view's own
+  `statecode` filter: Ann Acme and Anya Acme, the same two the 0.2.0 search
+  offers under that parent. FetchXML ANDs sibling filters, as `pcf-data-table`
+  measured for the runtime filter.
+- **P6 — not measurable here.** The environment has 25 active contacts; the
+  first request took 3,057 ms (cold), the next 121–304 ms. A 500-row list is
+  timed in the rig instead.
+- **P1 — `getViewId()` on this field control: pending, on the form.** The
+  placement on Primary Contact sets no `DefaultViewId` (read from the form XML
+  2026-10-13), so the first reading is the "left alone" case.
+
 ## Not verified
 
 - **The unmapped shape on this control.** A form with no Parent value mapped
