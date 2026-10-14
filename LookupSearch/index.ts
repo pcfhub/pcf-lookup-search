@@ -20,6 +20,7 @@ import {
     Relationship,
     resolveParent,
 } from './components/parent';
+import { installProbe } from './probe';
 
 type LookupValue = ComponentFramework.LookupValue;
 
@@ -103,7 +104,12 @@ export class LookupSearch implements ComponentFramework.ReactControl<IInputs, IO
         // No container: a virtual control never receives one.
         this.context = context;
         this.notifyOutputChanged = notifyOutputChanged;
+        // PROBE 0.2.9 — throwaway.
+        installProbe(() => this.context as unknown as ComponentFramework.Context<unknown>);
     }
+
+    // PROBE 0.2.9 — throwaway.
+    private probed = false;
 
     public updateView(context: ComponentFramework.Context<IInputs>): React.ReactElement {
         this.context = context;
@@ -119,6 +125,18 @@ export class LookupSearch implements ComponentFramework.ReactControl<IInputs, IO
 
         this.target = this.resolveTarget(parameter);
         this.readParent(context);
+
+        // PROBE 0.2.9 — throwaway: what the first pass says, before anything is clicked.
+        if (!this.probed) {
+            this.probed = true;
+            // eslint-disable-next-line no-console
+            console.log('[lookup-search probe] first pass', JSON.stringify({
+                target: this.target,
+                viewId: this.resolveViewId(parameter),
+                raw: parameter.raw,
+                parentMapped: this.parent.mapped,
+            }));
+        }
 
         // Field-level security is NOT the form's read-only state, and
         // conflating them is a real information bug: a user denied read access
