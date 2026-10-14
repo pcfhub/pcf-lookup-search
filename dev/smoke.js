@@ -655,6 +655,192 @@ check('and none at all where it cannot', mount({ hasNavigation: false }).props()
         JSON.stringify(cleared2.outputs()),
     );
 
+    /* ------------------------------------------------------- dropdown mode */
+
+    /*
+     * 0.3.0. A view's rows as the whole list — the PCF Gallery request
+     * board's most-voted topic. Every query below is asserted on what it
+     * *asked*, because the server's answer to it was measured once, on the
+     * form (SPEC.md, probe 0.2.9), and the rig only has to model that answer.
+     */
+    const FIELD_VIEW = '00000000-0000-0000-00aa-000010001002';
+    const LOOKUP_VIEW = '00000000-0000-0000-00aa-0000000000aa';
+    const old = { contactid: 'cccccccc-0000-4000-8000-000000000009', fullname: 'Olga Retired', emailaddress1: 'olga@acme.test', _parentcustomerid_value: ACME, statecode: 1 };
+    const active = [ann, andy, anya].map((row) => ({ ...row, statecode: 0 }));
+    const viewXml = (order, entity = 'contact') =>
+        `<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="false" top="7">`
+        + `<entity name="${entity}"><attribute name="fullname" /><attribute name="telephone1" /><attribute name="contactid" />`
+        + `<filter type="and"><condition attribute="statecode" operator="eq" value="0" /></filter>`
+        + `<order attribute="fullname" descending="${order === 'desc'}" /></entity></fetch>`;
+    const views = (rows) => ({
+        tables: {
+            contact: [...active, old],
+            savedquery: rows,
+        },
+        relationships: [COMPANY, OWNERSHIP],
+    });
+    // The field's view sorts descending and the lookup view ascending, so the
+    // order of the rows says which view a list came from without asking.
+    const FIELD = { savedqueryid: FIELD_VIEW, returnedtypecode: 'contact', querytype: 0, isdefault: false, fetchxml: viewXml('desc') };
+    const LOOKUP = { savedqueryid: LOOKUP_VIEW, returnedtypecode: 'contact', querytype: 64, isdefault: true, fetchxml: viewXml('asc') };
+    const onViews = (options) => onContacts({ retrieveRecord: 'fixture', fixture: views([FIELD, LOOKUP]), ...options, inputs: { displayMode: 'dropdown', ...(options.inputs || {}) } });
+    const listQueries = (handle) => handle.calls()
+        .filter((call) => call.startsWith('webAPI.retrieveMultipleRecords') && call.includes('contact ?fetchXml='))
+        .map((call) => decodeURIComponent(call.slice(call.indexOf('?fetchXml=') + 10)));
+    const names = (result) => (result.kind === 'rows' ? result.candidates.map((c) => c.name) : [result.kind]);
+
+    check('a form placed before 0.3.0 keeps the type-ahead', mount(onContacts({})).props().mode === 'search', mount(onContacts({})).props().mode);
+    check('displayMode dropdown hands down dropdown', mount(onViews({})).props().mode === 'dropdown');
+    check(
+        'and a value nobody declared reads as search',
+        mount(onViews({ inputs: { displayMode: 'grid' } })).props().mode === 'search',
+        mount(onViews({ inputs: { displayMode: 'grid' } })).props().mode,
+    );
+
+    const fromField = mount(onViews({}));
+    const fieldList = await fromField.props().list();
+    const fieldQuery = listQueries(fromField)[0] || '';
+
+    check('the view set on the column is the one listed', fieldList.kind === 'rows' && fieldList.source === 'field', JSON.stringify({ kind: fieldList.kind, source: fieldList.source }));
+    check('in that view\'s order, not re-sorted', JSON.stringify(names(fieldList)) === JSON.stringify(['Anya Acme', 'Ann Acme', 'Andy Globex']), names(fieldList).join(', '));
+    check('and a retired row is not in it', !names(fieldList).includes('Olga Retired'), names(fieldList).join(', '));
+    check(
+        'the view\'s own columns are swapped for the three the list renders',
+        !fieldQuery.includes('telephone1') && /<attribute name='contactid'\/><attribute name='fullname'\/><attribute name='emailaddress1'\/>/.test(fieldQuery),
+        fieldQuery,
+    );
+    check('its filter and its order ride along untouched', fieldQuery.includes('<condition attribute="statecode" operator="eq" value="0" />') && fieldQuery.includes('<order attribute="fullname" descending="true" />'), fieldQuery);
+    check('top goes and count is the limit plus one', !/\btop=/.test(fieldQuery) && fieldQuery.includes("count='101'"), fieldQuery);
+    check('the second line carries the secondary column', fieldList.kind === 'rows' && fieldList.candidates[0].secondary === 'anya@acme.test', JSON.stringify(fieldList.candidates && fieldList.candidates[0]));
+    check('nothing is listed on mount — only when asked', mount(onViews({})).calls().every((call) => !call.includes('?fetchXml=')));
+
+    const noView = mount(onViews({ viewId: null }));
+    const noViewList = await noView.props().list();
+
+    check('no view on the column lists the table\'s default lookup view', noViewList.kind === 'rows' && noViewList.source === 'lookup', JSON.stringify({ kind: noViewList.kind, source: noViewList.source }));
+    check('which is asked for by querytype 64 and isdefault', noView.calls().some((call) => call.includes('savedquery') && decodeURIComponent(call).includes("returnedtypecode eq 'contact' and querytype eq 64 and isdefault eq true")), noView.calls().filter((c) => c.includes('savedquery')).join(' | '));
+    check('in its order', JSON.stringify(names(noViewList)) === JSON.stringify(['Andy Globex', 'Ann Acme', 'Anya Acme']), names(noViewList).join(', '));
+
+    const gone = await mount(onViews({ viewId: '00000000-0000-0000-00aa-00000000dead' })).props().list();
+
+    check('a view id that resolves to nothing falls to the lookup view', gone.kind === 'rows' && gone.source === 'lookup', JSON.stringify({ kind: gone.kind, source: gone.source }));
+
+    const elsewhere = { ...FIELD, savedqueryid: '00000000-0000-0000-00aa-00000000e15e', fetchxml: viewXml('desc', 'account') };
+    const otherTable = await mount(onViews({ viewId: elsewhere.savedqueryid, fixture: views([elsewhere, LOOKUP]) })).props().list();
+
+    check('a view of another table is not listed', otherTable.kind === 'rows' && otherTable.source === 'lookup', JSON.stringify({ kind: otherTable.kind, source: otherTable.source }));
+
+    const nothing = mount(onViews({ viewId: null, fixture: views([]) }));
+    const nothingList = await nothing.props().list();
+
+    check('no view at all is unavailable', nothingList.kind === 'unavailable', nothingList.kind);
+    check('and never the bare table', listQueries(nothing).length === 0 && !nothing.calls().some((call) => call.startsWith('webAPI.retrieveMultipleRecords contact')), nothing.calls().join(' | '));
+
+    /*
+     * The view is cached for the page (lib/view-aggregate's rule), so a host
+     * that read it once and then refuses the list query rejects — and is not
+     * swallowed, for the reason a refused search is not: the platform's words
+     * are the only account of a mistyped secondary column. The component shows
+     * them and falls back to the type-ahead.
+     */
+    let listRefused = false;
+
+    try {
+        await mount(onViews({ webApiFails: true })).props().list();
+    } catch {
+        listRefused = true;
+    }
+
+    check('a refused list query is reported rather than swallowed', listRefused === true);
+
+    const two = await mount(onViews({ inputs: { dropdownLimit: 2 } })).props().list();
+
+    check('a view with more rows than the limit is truncated, and says so', two.kind === 'rows' && two.candidates.length === 2 && two.truncated === true, JSON.stringify({ n: two.candidates && two.candidates.length, truncated: two.truncated }));
+    check('one with exactly the limit is not', (await mount(onViews({ inputs: { dropdownLimit: 3 } })).props().list()).truncated === false);
+
+    const huge = mount(onViews({ inputs: { dropdownLimit: 99999 } }));
+    await huge.props().list();
+    const zero = mount(onViews({ inputs: { dropdownLimit: 0 } }));
+    await zero.props().list();
+
+    check('a limit above 500 is clamped to it', (listQueries(huge)[0] || '').includes("count='501'"), listQueries(huge)[0]);
+    check('and one below 1 up to it', (listQueries(zero)[0] || '').includes("count='2'"), listQueries(zero)[0]);
+
+    const underAcme = mount(onViews({ bound: { parentValue: parentOf(ACME, 'Acme') } }));
+    const acmeList = await underAcme.props().list();
+    const acmeQuery = listQueries(underAcme)[0] || '';
+
+    check('a parent narrows the list', JSON.stringify(names(acmeList)) === JSON.stringify(['Anya Acme', 'Ann Acme']), names(acmeList).join(', '));
+    check(
+        'as a second sibling filter beside the view\'s own',
+        acmeQuery.includes(`<filter type='and'><condition attribute='parentcustomerid' operator='eq' value='${ACME}'/></filter>`) && acmeQuery.includes('statecode'),
+        acmeQuery,
+    );
+    check('and the list key moves with the parent', underAcme.props().listKey !== fromField.props().listKey, `${underAcme.props().listKey} / ${fromField.props().listKey}`);
+
+    const unresolved = mount(onViews({ fixture: { ...views([FIELD, LOOKUP]), relationships: [COMPANY, PARTNER] }, bound: { parentValue: parentOf(ACME, 'Acme') } }));
+    const unresolvedList = await unresolved.props().list();
+
+    check('a parent the control cannot resolve lists nothing', unresolvedList.kind === 'unavailable' && listQueries(unresolved).length === 0, unresolvedList.kind);
+
+    const twice = mount(onViews({}));
+    await Promise.all([twice.props().list(), twice.props().list(), twice.props().list()]);
+
+    check('three opens share one list query', listQueries(twice).length === 1, `${listQueries(twice).length} list queries`);
+
+    // Its own id: views are cached per id for the page, as on a form.
+    const ampersand = {
+        ...FIELD,
+        savedqueryid: '00000000-0000-0000-00aa-0000000a3e5d',
+        fetchxml: FIELD.fetchxml.replace('<filter type="and">', '<filter type="and"><condition attribute="fullname" operator="ne" value="A &amp; B #1" />'),
+    };
+    const encoded = mount(onViews({ viewId: ampersand.savedqueryid, fixture: views([ampersand, LOOKUP]) }));
+    await encoded.props().list();
+    const sent = encoded.calls().find((call) => call.includes('contact ?fetchXml=')) || '';
+
+    check(
+        'the view\'s own text is URL-encoded, so an & or # in a value cannot end the query',
+        sent.includes('%26amp%3B') && sent.includes('%231') && !/[&#]/.test(sent.slice(sent.indexOf('?fetchXml=') + 10)),
+        sent,
+    );
+
+    const typed = mount(onViews({}));
+    const fallback = await typed.props().search('An');
+
+    check('a dropdown placement can still search, for when it falls back', fallback.length > 0, `${fallback.length} found`);
+
+    /*
+     * The pure half, loaded on its own: what the component does with the rows
+     * once they arrive. The bundle's Fluent is a stub here, so this is the
+     * only way to reach it.
+     */
+    const { createLoader } = require('./modules.js');
+    const load = createLoader({ root: path.join(root, 'LookupSearch'), forbid: [[/react|fluentui/, 'stay free of React']] });
+    const list = load('components/list');
+    const rows = [
+        { id: '1', name: 'Finland', secondary: 'FI' },
+        { id: '2', name: 'France', secondary: 'FR' },
+        { id: '3', name: 'Iceland', secondary: 'IS' },
+        { id: '4', name: 'Poland', secondary: 'PL' },
+    ];
+
+    check('typing filters the loaded rows anywhere in the name', JSON.stringify(list.filterLoaded(rows, 'LAND').map((r) => r.name)) === JSON.stringify(['Finland', 'Iceland', 'Poland']));
+    check('or the second line', JSON.stringify(list.filterLoaded(rows, 'fr').map((r) => r.name)) === JSON.stringify(['France']));
+    check(
+        'and keeps the view\'s order, which is not always alphabetical',
+        JSON.stringify(list.filterLoaded([...rows].reverse(), 'land').map((r) => r.name)) === JSON.stringify(['Poland', 'Iceland', 'Finland']),
+        list.filterLoaded([...rows].reverse(), 'land').map((r) => r.name).join(', '),
+    );
+    check('and an empty term is every row, in order', list.filterLoaded(rows, '  ').length === 4 && list.filterLoaded(rows, '')[3].name === 'Poland');
+    check('a view whose root is another table is refused', list.listFetchXml(viewXml('asc', 'account'), { primaryId: 'contactid', primaryName: 'fullname', secondaryColumn: '', searchColumns: [] }, 'contact', 10) === null);
+    check(
+        'a link-entity\'s attributes go too, the link stays',
+        (list.listFetchXml('<fetch><entity name="contact"><link-entity name="account" from="accountid" to="parentcustomerid"><attribute name="name" /></link-entity></entity></fetch>', { primaryId: 'contactid', primaryName: 'fullname', secondaryColumn: '', searchColumns: [] }, 'contact', 10) || '')
+            .includes('<link-entity name="account" from="accountid" to="parentcustomerid"></link-entity>'),
+    );
+    check('a column that is not a logical name is refused before it reaches XML', list.listFetchXml(viewXml('asc'), { primaryId: 'contactid', primaryName: 'fullname', secondaryColumn: "x'/><all-attributes", searchColumns: [] }, 'contact', 10) === null);
+    check('clampLimit reads a missing limit as 100', list.clampLimit(null) === 100 && list.clampLimit(undefined) === 100 && list.clampLimit(Number.NaN) === 100);
+
     /* --------------------------------------------------- what destroy owes */
 
     disposeAll();

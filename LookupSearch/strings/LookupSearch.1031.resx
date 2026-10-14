@@ -196,4 +196,34 @@
   <data name="LookupSearch_ParentUnbound" xml:space="preserve">
     <value>„Verknüpfungsspalte“ ist gesetzt, aber „Filtern nach“ ist nicht zugeordnet, daher ist die Suche deaktiviert. Ordnen Sie „Filtern nach“ der übergeordneten Nachschlagespalte in diesem Formular zu.</value>
   </data>
+  <data name="displayMode_Name" xml:space="preserve">
+    <value>Anzeigen als</value>
+  </data>
+  <data name="displayMode_Desc" xml:space="preserve">
+    <value>Suche findet Datensätze während der Eingabe. Dropdown listet beim Öffnen die Zeilen der für diese Spalte festgelegten Ansicht (oder der Standard-Nachschlageansicht der Tabelle) auf und filtert sie während der Eingabe.</value>
+  </data>
+  <data name="displayMode_Search_Name" xml:space="preserve">
+    <value>Suche</value>
+  </data>
+  <data name="displayMode_Dropdown_Name" xml:space="preserve">
+    <value>Dropdown</value>
+  </data>
+  <data name="dropdownLimit_Name" xml:space="preserve">
+    <value>Dropdown-Zeilen</value>
+  </data>
+  <data name="dropdownLimit_Desc" xml:space="preserve">
+    <value>Wie viele Zeilen ein Dropdown auflistet, von 1 bis 500. Standard: 100. Hat die Ansicht mehr, steht das am Ende der Liste.</value>
+  </data>
+  <data name="LookupSearch_LoadingList" xml:space="preserve">
+    <value>Wird geladen…</value>
+  </data>
+  <data name="LookupSearch_ListEmpty" xml:space="preserve">
+    <value>Die Ansicht dieser Spalte enthält keine Datensätze.</value>
+  </data>
+  <data name="LookupSearch_ListTruncated" xml:space="preserve">
+    <value>Die ersten {0} werden angezeigt. Tippen Sie, um die Liste einzugrenzen, oder grenzen Sie die Ansicht ein.</value>
+  </data>
+  <data name="LookupSearch_ListUnavailable" xml:space="preserve">
+    <value>Für diese Spalte konnte keine Ansicht gelesen werden, daher wird stattdessen während der Eingabe gesucht.</value>
+  </data>
 </root>

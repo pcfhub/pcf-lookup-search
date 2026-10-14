@@ -8,6 +8,7 @@ import {
 } from '@fluentui/react-components';
 import { Candidate, describeError } from './search';
 import { allowsBrowse, allowsSearch, ParentState } from './parent';
+import { filterLoaded, ListResult } from './list';
 
 type LookupValue = ComponentFramework.LookupValue;
 
@@ -33,6 +34,14 @@ export interface ILookupStrings {
     parentUnavailable: string;
     /** A Linking column set with no Filter by mapped. */
     parentUnbound: string;
+    /** Dropdown mode, while the view's rows are read. */
+    loadingList: string;
+    /** Dropdown mode: the view has no rows at all. */
+    listEmpty: string;
+    /** Carries a `{0}` for how many rows are shown. */
+    listTruncated: string;
+    /** Dropdown mode could not read a view, so the field searches instead. */
+    listUnavailable: string;
 }
 
 export interface IProps {
@@ -50,6 +59,15 @@ export interface IProps {
     isRTL: boolean;
     theme: ComponentFramework.Theme | undefined;
     strings: ILookupStrings;
+    /**
+     * `search` is the type-ahead every release before 0.3.0 had. `dropdown`
+     * lists a view's rows on open and filters them as the user types; it falls
+     * back to `search` when no view can be read.
+     */
+    mode: 'search' | 'dropdown';
+    /** Changes whenever the list would — the component reloads on it, and only on it. */
+    listKey: string;
+    list: () => Promise<ListResult>;
     /** Resolves false when this host cannot search — see `index.ts`. */
     prepare: () => Promise<boolean>;
     search: (term: string) => Promise<Candidate[]>;
@@ -262,6 +280,68 @@ export function LookupSearchControl(props: IProps): React.ReactElement | null {
 
     const parentAllowsSearch = parent !== null && allowsSearch(parent);
 
+    /*
+     * Dropdown mode's list: null until the first open, then the view's rows or
+     * the news that there is no view to read. Keyed on `listKey`, so a new
+     * parent or a re-bound column drops the old rows rather than offering them.
+     */
+    const [listed, setListed] = React.useState<ListResult | null>(null);
+    const [listing, setListing] = React.useState(false);
+    const [wantList, setWantList] = React.useState(false);
+
+    React.useEffect(() => {
+        setListed(null);
+        setListing(false);
+        setWantList(false);
+    }, [props.listKey]);
+
+    // Falls back to the type-ahead when no view can be read, so the field keeps
+    // working — the message under it says why it changed.
+    const dropdown = props.mode === 'dropdown' && listed?.kind !== 'unavailable';
+
+    // Read once, when first wanted: on open or on the first keystroke, never on
+    // mount — a form with this field on it should not query a table nobody
+    // opened.
+    React.useEffect(() => {
+        if (!dropdown || !wantList || listed !== null || canSearch !== true || !parentAllowsSearch) {
+            return;
+        }
+
+        let live = true;
+        setListing(true);
+        setFailure(null);
+
+        props.list().then(
+            (result) => {
+                if (live) {
+                    setListed(result);
+                    setListing(false);
+                }
+            },
+            (error: unknown) => {
+                if (!live) {
+                    return;
+                }
+
+                // A refused list query: show the platform's words, and search
+                // instead — the same way out an unreadable view takes.
+                setListed({ kind: 'unavailable' });
+                setListing(false);
+                setFailure(describeError(error) || strings.searchFailed);
+            },
+        );
+
+        return () => {
+            live = false;
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [dropdown, wantList, listed, canSearch, parentAllowsSearch, props.listKey]);
+
+    const shown = dropdown
+        ? listed?.kind === 'rows' ? filterLoaded(listed.candidates, query) : []
+        : candidates;
+    const truncated = dropdown && listed?.kind === 'rows' && listed.truncated;
+
     // The search itself: debounced, and guarded by the effect's own lifetime.
     //
     // `live` is what makes a slow answer harmless. Each keystroke re-runs this
@@ -271,7 +351,8 @@ export function LookupSearchControl(props: IProps): React.ReactElement | null {
     // promise with nothing to abort, so retiring the *handler* is the only
     // cancellation available.
     React.useEffect(() => {
-        if (canSearch !== true || !parentAllowsSearch || props.disabled || selected !== null) {
+        // Dropdown mode filters what it already holds; nothing is sent per key.
+        if (dropdown || canSearch !== true || !parentAllowsSearch || props.disabled || selected !== null) {
             return;
         }
 
@@ -342,7 +423,7 @@ export function LookupSearchControl(props: IProps): React.ReactElement | null {
             window.clearTimeout(timer);
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [query, canSearch, parentAllowsSearch, props.parentKey, selected, props.disabled, props.minimumCharacters]);
+    }, [query, canSearch, parentAllowsSearch, props.parentKey, selected, props.disabled, props.minimumCharacters, dropdown]);
 
     const commit = (next: LookupValue | null): void => {
         restoreFocus.current = next === null;
@@ -369,7 +450,7 @@ export function LookupSearchControl(props: IProps): React.ReactElement | null {
     }
 
     const onSelect = (id: string | undefined): void => {
-        const candidate = candidates.find((row) => row.id === id);
+        const candidate = shown.find((row) => row.id === id);
 
         if (candidate) {
             commit({ id: candidate.id, name: candidate.name, entityType: props.entityType });
@@ -405,6 +486,20 @@ export function LookupSearchControl(props: IProps): React.ReactElement | null {
             return '';
         }
 
+        if (dropdown) {
+            if (listing || listed === null) {
+                return listing ? strings.loadingList : '';
+            }
+
+            if (shown.length > 0) {
+                return '';
+            }
+
+            // Two different empties: a view with no rows, and rows none of
+            // which match what was typed.
+            return listed.kind === 'rows' && listed.candidates.length === 0 ? strings.listEmpty : strings.noMatches;
+        }
+
         switch (status) {
             case 'searching':
                 return strings.searching;
@@ -437,7 +532,15 @@ export function LookupSearchControl(props: IProps): React.ReactElement | null {
                 break;
         }
 
-        return selected === null && canSearch === false ? strings.searchUnavailable : '';
+        if (selected === null && canSearch === false) {
+            return strings.searchUnavailable;
+        }
+
+        // Asked for a dropdown and searching instead: say so, or the maker
+        // reads a type-ahead as the dropdown not having been configured.
+        return props.mode === 'dropdown' && listed?.kind === 'unavailable' && failure === null
+            ? strings.listUnavailable
+            : '';
     };
 
     // Said only while choosing: once a record is chosen the filter has nothing
@@ -505,10 +608,12 @@ export function LookupSearchControl(props: IProps): React.ReactElement | null {
                         ref={input}
                         className="LookupSearch-combobox"
                         freeform
-                        // The chevron is the wrong affordance here: this list
-                        // has nothing in it until something is typed. The
-                        // magnifier below is what a lookup offers instead.
-                        expandIcon={null}
+                        // In search mode the chevron is the wrong affordance:
+                        // the list has nothing in it until something is typed,
+                        // and the magnifier below is what a lookup offers
+                        // instead. A dropdown has its whole list on open, which
+                        // is exactly what a chevron promises.
+                        expandIcon={dropdown ? undefined : null}
                         // Controlled on both halves. Leaving either to Fluent
                         // lets the input and the listbox disagree after a write
                         // the platform did not echo back.
@@ -516,9 +621,24 @@ export function LookupSearchControl(props: IProps): React.ReactElement | null {
                         selectedOptions={[]}
                         // Open for anything worth showing, not only for results:
                         // the message rows below live in here too.
-                        open={open && (candidates.length > 0 || popupText !== '')}
-                        onOpenChange={(_, data) => setOpen(data.open)}
-                        onChange={(event) => setQuery(event.target.value)}
+                        open={open && (shown.length > 0 || popupText !== '')}
+                        onOpenChange={(_, data) => {
+                            setOpen(data.open);
+
+                            if (data.open && dropdown) {
+                                setWantList(true);
+                            }
+                        }}
+                        onChange={(event) => {
+                            setQuery(event.target.value);
+
+                            // Typing into a dropdown filters it, so it opens
+                            // — and loads, if this is the first thing done.
+                            if (dropdown) {
+                                setWantList(true);
+                                setOpen(true);
+                            }
+                        }}
                         onOptionSelect={(_, data) => onSelect(data.optionValue)}
                         placeholder={props.placeholder}
                         disabled={props.disabled || !searchable}
@@ -539,26 +659,35 @@ export function LookupSearchControl(props: IProps): React.ReactElement | null {
                         // control's right edge.
                         positioning={{ target: fieldEl, matchTargetSize: 'width' }}
                     >
-                        {candidates.length > 0 ? (
-                            candidates.map((candidate) => (
-                                <Option key={candidate.id} value={candidate.id} text={candidate.name}>
-                                    <span className="LookupSearch-option">
-                                        <span className="LookupSearch-option-name">{candidate.name}</span>
-                                        {candidate.secondary !== '' && (
-                                            <span className="LookupSearch-option-secondary">
-                                                {candidate.secondary}
-                                            </span>
-                                        )}
-                                    </span>
-                                </Option>
-                            ))
+                        {shown.length > 0 ? (
+                            <>
+                                {shown.map((candidate) => (
+                                    <Option key={candidate.id} value={candidate.id} text={candidate.name}>
+                                        <span className="LookupSearch-option">
+                                            <span className="LookupSearch-option-name">{candidate.name}</span>
+                                            {candidate.secondary !== '' && (
+                                                <span className="LookupSearch-option-secondary">
+                                                    {candidate.secondary}
+                                                </span>
+                                            )}
+                                        </span>
+                                    </Option>
+                                ))}
+                                {truncated && listed?.kind === 'rows' && (
+                                    // Last, and not an <Option>, for the reason
+                                    // the notice below is not one.
+                                    <div className="LookupSearch-notice" role="presentation">
+                                        <span>{format(strings.listTruncated, String(listed.candidates.length))}</span>
+                                    </div>
+                                )}
+                            </>
                         ) : (
                             // Not an <Option>: a disabled option is still
                             // announced as a choice and is still in the keyboard
                             // order, and none of this is choosable. The live
                             // region under the field is what announces it.
                             <div className="LookupSearch-notice" role="presentation">
-                                {status === 'searching' && (
+                                {(dropdown ? listing : status === 'searching') && (
                                     <Spinner size="extra-tiny" aria-hidden="true" />
                                 )}
                                 <span>{popupText}</span>

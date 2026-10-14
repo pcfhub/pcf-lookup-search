@@ -510,6 +510,14 @@
         targetMethod: 'present',
 
         /**
+         * What the bound lookup's `getViewId()` answers. `undefined` keeps the
+         * rig's fixed id; `null` and `''` are a host that names no view — the
+         * shape `pcf-hierarchy-view` measured on a bound lookup (`null`,
+         * against typings that say string).
+         */
+        viewId: undefined,
+
+        /**
          * Bound properties beyond the first, by manifest name — a second
          * column the maker maps in the configuration pane, such as the parent
          * a cascading lookup is filtered by.
@@ -1008,7 +1016,14 @@
 
         return {
             entity: entityTag ? attr(entityTag[0], 'name') : undefined,
-            top: fetchTag && attr(fetchTag[0], 'top') !== undefined ? Number(attr(fetchTag[0], 'top')) : undefined,
+            /*
+             * `top`, or `count` — the page size, which the server answers by
+             * returning that many rows and `morerecords` (pcf-lookup-search
+             * probe 0.2.9 P3, 2026-10-13: count='6' answered 6). The rig
+             * truncates to either; it does not page a FetchXML query.
+             */
+            top: fetchTag && attr(fetchTag[0], 'top') !== undefined ? Number(attr(fetchTag[0], 'top'))
+                : fetchTag && attr(fetchTag[0], 'count') !== undefined ? Number(attr(fetchTag[0], 'count')) : undefined,
             attributes: all(/<attribute\b[^>]*\/>/g).map(function (tag) {
                 return { name: attr(tag, 'name'), alias: attr(tag, 'alias'), rowaggregate: attr(tag, 'rowaggregate') };
             }),
@@ -1987,7 +2002,7 @@
                             if (o.targetMethod === 'throws') {
                                 throw new Error('getViewId is not available on this host.');
                             }
-                            return '00000000-0000-0000-00aa-000010001002';
+                            return o.viewId !== undefined ? o.viewId : '00000000-0000-0000-00aa-000010001002';
                         },
                     }, parameters.value || {}),
                 }

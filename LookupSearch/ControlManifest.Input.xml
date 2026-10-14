@@ -187,6 +187,39 @@
       <value name="clear" display-name-key="onParentChange_Clear_Name">clear</value>
     </property>
 
+    <!--
+      0.3.0. `search` is the type-ahead, and the default, so a form placed
+      under 0.2.x upgrades into exactly what it had. `dropdown` lists the rows
+      of a view on open — the view set on this column in the form designer,
+      else the table's default lookup view — and filters them as the user
+      types. The PCF Gallery request board's most-voted topic, for reference
+      data such as countries, where retiring a value should take it out of
+      the list: a lookup view already filters to active rows.
+    -->
+    <property name="displayMode"
+              display-name-key="displayMode_Name"
+              description-key="displayMode_Desc"
+              of-type="Enum"
+              usage="input"
+              required="false"
+              default-value="search">
+      <value name="search" display-name-key="displayMode_Search_Name">search</value>
+      <value name="dropdown" display-name-key="displayMode_Dropdown_Name">dropdown</value>
+    </property>
+
+    <!--
+      How many rows a dropdown lists before it says there are more. Clamped to
+      1..500 in code: a dropdown of thousands is a search, and the type-ahead is
+      still there for it.
+    -->
+    <property name="dropdownLimit"
+              display-name-key="dropdownLimit_Name"
+              description-key="dropdownLimit_Desc"
+              of-type="Whole.None"
+              usage="input"
+              required="false"
+              default-value="100" />
+
     <resources>
       <code path="index.ts" order="1" />
       <platform-library name="React" version="16.14.0" />

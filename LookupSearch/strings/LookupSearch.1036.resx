@@ -196,4 +196,34 @@
   <data name="LookupSearch_ParentUnbound" xml:space="preserve">
     <value>Colonne de liaison est définie, mais Filtrer par n’est pas mappé ; la recherche est désactivée. Mappez Filtrer par sur la colonne de recherche parente de ce formulaire.</value>
   </data>
+  <data name="displayMode_Name" xml:space="preserve">
+    <value>Afficher comme</value>
+  </data>
+  <data name="displayMode_Desc" xml:space="preserve">
+    <value>Recherche trouve les enregistrements pendant la saisie. Liste déroulante affiche à l’ouverture les lignes de la vue définie sur cette colonne (ou de la vue de recherche par défaut de la table) et les filtre pendant la saisie.</value>
+  </data>
+  <data name="displayMode_Search_Name" xml:space="preserve">
+    <value>Recherche</value>
+  </data>
+  <data name="displayMode_Dropdown_Name" xml:space="preserve">
+    <value>Liste déroulante</value>
+  </data>
+  <data name="dropdownLimit_Name" xml:space="preserve">
+    <value>Lignes de la liste déroulante</value>
+  </data>
+  <data name="dropdownLimit_Desc" xml:space="preserve">
+    <value>Nombre de lignes affichées par une liste déroulante, de 1 à 500. Par défaut 100. Une vue qui en contient davantage le signale en fin de liste.</value>
+  </data>
+  <data name="LookupSearch_LoadingList" xml:space="preserve">
+    <value>Chargement…</value>
+  </data>
+  <data name="LookupSearch_ListEmpty" xml:space="preserve">
+    <value>La vue de cette colonne ne contient aucun enregistrement.</value>
+  </data>
+  <data name="LookupSearch_ListTruncated" xml:space="preserve">
+    <value>Affichage des {0} premiers. Saisissez du texte pour réduire la liste, ou affinez la vue.</value>
+  </data>
+  <data name="LookupSearch_ListUnavailable" xml:space="preserve">
+    <value>Aucune vue n’a pu être lue pour cette colonne ; elle effectue donc une recherche pendant la saisie.</value>
+  </data>
 </root>

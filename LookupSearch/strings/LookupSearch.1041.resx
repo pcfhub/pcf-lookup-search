@@ -196,4 +196,34 @@
   <data name="LookupSearch_ParentUnbound" xml:space="preserve">
     <value>[リンク列] が設定されていますが、[フィルター条件] がマップされていないため、検索は無効です。[フィルター条件] をこのフォームの親の検索列にマップしてください。</value>
   </data>
+  <data name="displayMode_Name" xml:space="preserve">
+    <value>表示方法</value>
+  </data>
+  <data name="displayMode_Desc" xml:space="preserve">
+    <value>[検索] は入力に合わせてレコードを検索します。[ドロップダウン] は開いたときにこの列に設定されたビュー (またはテーブルの既定の検索ビュー) の行を一覧表示し、入力に合わせて絞り込みます。</value>
+  </data>
+  <data name="displayMode_Search_Name" xml:space="preserve">
+    <value>検索</value>
+  </data>
+  <data name="displayMode_Dropdown_Name" xml:space="preserve">
+    <value>ドロップダウン</value>
+  </data>
+  <data name="dropdownLimit_Name" xml:space="preserve">
+    <value>ドロップダウンの行数</value>
+  </data>
+  <data name="dropdownLimit_Desc" xml:space="preserve">
+    <value>ドロップダウンに表示する行数 (1 ～ 500)。既定は 100 です。それより多い場合は一覧の最後に表示されます。</value>
+  </data>
+  <data name="LookupSearch_LoadingList" xml:space="preserve">
+    <value>読み込み中…</value>
+  </data>
+  <data name="LookupSearch_ListEmpty" xml:space="preserve">
+    <value>この列のビューにはレコードがありません。</value>
+  </data>
+  <data name="LookupSearch_ListTruncated" xml:space="preserve">
+    <value>最初の {0} 件を表示しています。入力して一覧を絞り込むか、ビューを絞り込んでください。</value>
+  </data>
+  <data name="LookupSearch_ListUnavailable" xml:space="preserve">
+    <value>この列のビューを読み取れなかったため、入力に合わせて検索します。</value>
+  </data>
 </root>

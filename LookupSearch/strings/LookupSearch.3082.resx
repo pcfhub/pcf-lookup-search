@@ -196,4 +196,34 @@
   <data name="LookupSearch_ParentUnbound" xml:space="preserve">
     <value>Columna de vínculo está definida, pero Filtrar por no está asignado, así que la búsqueda está desactivada. Asigne Filtrar por a la búsqueda primaria de este formulario.</value>
   </data>
+  <data name="displayMode_Name" xml:space="preserve">
+    <value>Mostrar como</value>
+  </data>
+  <data name="displayMode_Desc" xml:space="preserve">
+    <value>Búsqueda encuentra registros mientras escribe. Lista desplegable muestra al abrirse las filas de la vista configurada en esta columna (o de la vista de búsqueda predeterminada de la tabla) y las filtra mientras escribe.</value>
+  </data>
+  <data name="displayMode_Search_Name" xml:space="preserve">
+    <value>Búsqueda</value>
+  </data>
+  <data name="displayMode_Dropdown_Name" xml:space="preserve">
+    <value>Lista desplegable</value>
+  </data>
+  <data name="dropdownLimit_Name" xml:space="preserve">
+    <value>Filas de la lista desplegable</value>
+  </data>
+  <data name="dropdownLimit_Desc" xml:space="preserve">
+    <value>Cuántas filas muestra una lista desplegable, de 1 a 500. Valor predeterminado: 100. Una vista con más lo indica al final de la lista.</value>
+  </data>
+  <data name="LookupSearch_LoadingList" xml:space="preserve">
+    <value>Cargando…</value>
+  </data>
+  <data name="LookupSearch_ListEmpty" xml:space="preserve">
+    <value>La vista de esta columna no tiene registros.</value>
+  </data>
+  <data name="LookupSearch_ListTruncated" xml:space="preserve">
+    <value>Se muestran los primeros {0}. Escriba para acotar la lista o acote la vista.</value>
+  </data>
+  <data name="LookupSearch_ListUnavailable" xml:space="preserve">
+    <value>No se pudo leer ninguna vista para esta columna, así que busca mientras escribe.</value>
+  </data>
 </root>

@@ -20,6 +20,16 @@ import {
     Relationship,
     resolveParent,
 } from './components/parent';
+import {
+    clampLimit,
+    defaultLookupViewQuery,
+    listFetchXml,
+    listQuery,
+    ListResult,
+    readList,
+    ViewSource,
+} from './components/list';
+import { readViewFetchXml, WebApiReader } from './lib/view-aggregate/aggregate';
 
 type LookupValue = ComponentFramework.LookupValue;
 
@@ -96,6 +106,12 @@ export class LookupSearch implements ComponentFramework.ReactControl<IInputs, IO
     /** What the current parent allows, keyed like `parentKey`. */
     private parentState: { key: string; promise: Promise<ParentState> } | null = null;
 
+    /**
+     * Dropdown mode's rows, keyed like `listKey` and kept as the promise, so a
+     * re-render while the list is loading does not send it twice.
+     */
+    private listState: { key: string; promise: Promise<ListResult> } | null = null;
+
     public init(
         context: ComponentFramework.Context<IInputs>,
         notifyOutputChanged: () => void,
@@ -153,6 +169,12 @@ export class LookupSearch implements ComponentFramework.ReactControl<IInputs, IO
             // harness — the component falls back.
             theme: context.fluentDesignLanguage?.tokenTheme,
             strings: this.readStrings(context),
+            // The union the manifest generates is a claim about a runtime that
+            // can hand down anything; a form saved before 0.3.0 hands down
+            // nothing, and that is the type-ahead it always had.
+            mode: context.parameters.displayMode?.raw === 'dropdown' ? 'dropdown' : 'search',
+            listKey: this.listKey(),
+            list: (): Promise<ListResult> => this.list(),
             prepare: (): Promise<boolean> => this.prepare(),
             search: (term: string): Promise<Candidate[]> => this.search(term),
             browse: (): Promise<LookupValue | null> => this.browse(),
@@ -504,6 +526,115 @@ export class LookupSearch implements ComponentFramework.ReactControl<IInputs, IO
     }
 
     /**
+     * Everything the list depends on, as one string: the component reloads
+     * when it changes and at no other time. The parent is in it through
+     * `parentKey`, so a list read under one parent is never offered under
+     * another.
+     */
+    private listKey(): string {
+        const parameters = this.context.parameters;
+
+        return [
+            this.target,
+            this.resolveViewId(parameters.value),
+            this.parentKey(),
+            clampLimit(parameters.dropdownLimit?.raw),
+            (parameters.secondaryColumn.raw ?? '').trim().toLowerCase(),
+        ].join('|');
+    }
+
+    private list(): Promise<ListResult> {
+        const key = this.listKey();
+
+        if (!this.listState || this.listState.key !== key) {
+            this.listState = { key, promise: this.loadList() };
+        }
+
+        return this.listState.promise;
+    }
+
+    /**
+     * Dropdown mode: the rows of a view, read once.
+     *
+     * **Which view, in order.** The one configured on the form for this column,
+     * if `getViewId()` names one that is this table's; otherwise the table's
+     * default *lookup* view — the one the platform's own lookup opens with,
+     * filtered to active rows and ordered by name on contact (probe 0.2.9 P2).
+     * Neither readable is `unavailable`, and the component goes back to the
+     * type-ahead. **Never the bare table**: a list that silently includes
+     * every retired value is the one thing a dropdown over reference data must
+     * not do.
+     *
+     * A refused *list query* is not swallowed — like a refused search, its
+     * message is the only account of a mistyped secondary column — and the
+     * component shows it and falls back too.
+     */
+    private async loadList(): Promise<ListResult> {
+        const target = this.target;
+        const webAPI = this.context.webAPI;
+
+        if (!target || typeof webAPI?.retrieveMultipleRecords !== 'function' || typeof webAPI.retrieveRecord !== 'function') {
+            return { kind: 'unavailable' };
+        }
+
+        const [metadata, parent] = await Promise.all([this.metadataColumns(), this.currentParent()]);
+
+        if (!metadata || !allowsSearch(parent)) {
+            return { kind: 'unavailable' };
+        }
+
+        const parameters = this.context.parameters;
+        const columns: QueryColumns = {
+            ...metadata,
+            secondaryColumn: parseColumnList((parameters.secondaryColumn.raw ?? '').trim().toLowerCase())[0] ?? '',
+            searchColumns: [],
+        };
+        const limit = clampLimit(parameters.dropdownLimit?.raw);
+        const constraint = parent.kind === 'filtered' ? parent : null;
+
+        let source: ViewSource = 'field';
+        const fieldView = await readViewFetchXml(webAPI as unknown as WebApiReader, this.resolveViewId(parameters.value));
+        let xml = fieldView !== null ? listFetchXml(fieldView, columns, target, limit, constraint) : null;
+
+        if (xml === null) {
+            source = 'lookup';
+            xml = await this.defaultLookupView(target, columns, limit, constraint);
+        }
+
+        if (xml === null) {
+            return { kind: 'unavailable' };
+        }
+
+        const response = await webAPI.retrieveMultipleRecords(target, listQuery(xml));
+        const { candidates, truncated } = readList(toCandidates(response.entities, columns), limit);
+
+        return { kind: 'rows', source, candidates, truncated };
+    }
+
+    /** The table's default lookup view, rewritten; `null` when there is none to read. */
+    private async defaultLookupView(
+        target: string,
+        columns: QueryColumns,
+        limit: number,
+        constraint: Parameters<typeof listFetchXml>[4],
+    ): Promise<string | null> {
+        const query = defaultLookupViewQuery(target);
+
+        if (query === null) {
+            return null;
+        }
+
+        try {
+            const answer = await this.context.webAPI.retrieveMultipleRecords('savedquery', query, 1);
+            const view = answer.entities[0]?.fetchxml;
+
+            return typeof view === 'string' ? listFetchXml(view, columns, target, limit, constraint) : null;
+        } catch {
+            return null;
+        }
+    }
+
+    /**
      * The platform's own lookup panel, as the way out of a search that cannot
      * find it — a record the maker's search columns do not cover, or a host
      * where searching is unavailable entirely.
@@ -582,6 +713,10 @@ export class LookupSearch implements ComponentFramework.ReactControl<IInputs, IO
             parentNone: get('LookupSearch_ParentNone'),
             parentUnavailable: get('LookupSearch_ParentUnavailable'),
             parentUnbound: get('LookupSearch_ParentUnbound'),
+            loadingList: get('LookupSearch_LoadingList'),
+            listEmpty: get('LookupSearch_ListEmpty'),
+            listTruncated: get('LookupSearch_ListTruncated'),
+            listUnavailable: get('LookupSearch_ListUnavailable'),
         };
     }
 }
