@@ -28,8 +28,8 @@ tables. Both are polymorphic, and this control searches a single table.
 :::callout{type=info}
 The **view** the column is configured with on the form is not used for the
 type-ahead — that is a Dataverse query, not a view — but it *is* what the
-**Browse** panel opens on. So the view still decides what a maker sees when
-they click through, and it is worth setting.
+**Browse** panel opens on, and from 0.3.0 it is the list a **dropdown** shows.
+So the view still decides what a user sees, and it is worth setting.
 :::
 
 ## Configuration
@@ -45,11 +45,49 @@ as text:
 | `Minimum characters` | `2` | How much has to be typed before anything is requested. |
 | `Maximum results` | `8` | How many matches the list shows. |
 | `Allow browse` | `Yes` | Whether the platform lookup panel is offered beside the search box. |
+| `Display as` | `Search` | `Dropdown` lists a view's rows when the field is opened — see below. |
+| `Dropdown rows` | `100` | How many rows a dropdown lists, 1 to 500. |
 
 Use **logical names**, not display names — `emailaddress1`, not *Email*. A name
 that cannot be a logical name at all is ignored; one that is merely wrong
 reaches Dataverse, and its error appears under the field, which is how you find
 out.
+
+## Showing it as a dropdown
+
+From 0.3.0, **Display as → Dropdown** turns the field into a list of choices
+rather than a search — for reference data a user picks from rather than looks
+up: countries, categories, regions, product families.
+
+:::steps
+1. Set **Display as** to **Dropdown**.
+2. Optionally set **Dropdown rows** (default 100, at most 500).
+3. Save and publish. Opening the field lists the rows; typing narrows them.
+:::
+
+**Which rows, in which order.** The rows come from a view, never from the
+whole table:
+
+1. the view set for this column in the form designer, if there is one;
+2. otherwise the table's **default lookup view** — the one the platform's own
+   lookup opens with.
+
+The view's filter and its sort order are kept as they are. A table's lookup
+view normally shows **active records only**, so a value you deactivate leaves
+the dropdown without anything else to configure — the way to *retire* a
+country or a category. To change what is listed or its order, edit the view.
+
+**When a view has more rows than Dropdown rows**, the list ends with a line
+saying how many it shows; typing still narrows only what was listed. A table
+with thousands of records is a search, not a dropdown, and Display as →
+Search is still there for it.
+
+**When no view can be read** — the field's view was deleted, or the user
+cannot read it, and the table has no default lookup view — the field says so
+under the box and **searches as you type instead**, so it keeps working.
+
+**Filter by** narrows a dropdown exactly as it narrows a search: only the
+records related to the parent are listed, and Browse is hidden while it does.
 
 ## Filtering by a parent column
 

@@ -74,3 +74,18 @@ table; `parentColumn` chooses between two or more, and must name one of them.
 **`onParentChange` is `keep` or `clear`**, default `keep`. `clear` checks the
 chosen record against the new parent with one query and empties it only when no
 row comes back.
+
+**`displayMode` is `search` or `dropdown`**, default `search`, so a form
+placed before 0.3.0 keeps the type-ahead. `dropdown` lists a view's rows when
+the field is first opened and filters them in the browser as the user types,
+in the order they came — nothing is sent per keystroke. The view is the one
+`getViewId()` names when it is this table's, else the table's default lookup
+view (`savedquery`, `querytype eq 64`, `isdefault eq true`). Its FetchXML is
+sent with every `<attribute>` replaced by the primary key, the primary name
+and `secondaryColumn`; its `<filter>`, `<link-entity>` and `<order>` stay, a
+parent goes in as a second sibling `<filter>`, and `count` is
+`dropdownLimit + 1`, so one row more than the limit is how the control knows
+there are more. Neither view readable, the field falls back to `search` and
+says so; it never lists the bare table.
+
+**`dropdownLimit` is clamped to 1–500**, default 100.

@@ -22,6 +22,12 @@ user who remembers the address instead of the spelling finds the record anyway.
 Each match can carry a second line — `Secondary column` — which is the
 difference between choosing from a list of eleven J. Martins and giving up.
 
+From 0.3.0 it can be a **dropdown** instead (`displayMode`): the rows of the
+column's view — or the table's default lookup view — listed on open, in the
+view's order, narrowed as the user types. For reference tables a user picks
+from rather than looks up, where deactivating a record should take it out of
+the list: the lookup view lists active records, so it does.
+
 Two decisions are worth knowing before reading the code.
 
 **The control does not know its own target table, and asks twice.** The bound
@@ -53,6 +59,8 @@ type definitions claim.
 | `secondaryColumn` | SingleLine.Text | input | — | One logical name, shown under each result. The formatted value is preferred where Dataverse supplies one |
 | `searchColumns` | SingleLine.Text | input | — | Comma-separated logical names to match in addition to the primary name column |
 | `allowBrowse` | TwoOptions | input | `true` | Whether the platform's own lookup panel is offered beside the search box |
+| `displayMode` | Enum | input | `search` | `search` or `dropdown`. A dropdown lists the rows of the column's view (or the table's default lookup view) on open, in that view's order |
+| `dropdownLimit` | Whole.None | input | `100` | How many rows a dropdown lists. Clamped to 1–500 |
 
 The single output is `value`, the same `LookupValue[]`.
 

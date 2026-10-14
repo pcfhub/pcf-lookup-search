@@ -18,10 +18,11 @@ order: 7
 
 - **One parent, and it must be a lookup.** The search can follow one lookup
   on the form (**Filter by**). A Choice column, several parents at once, or
-  a fixed condition such as *active records only* are not supported;
-  `context.webAPI` takes no form context of its own, and the parent is the one
-  value the platform hands the control. A view with the filter built in, set
-  on the column, narrows what **Browse** shows.
+  a fixed condition such as *active records only* are not supported by the
+  **search**; `context.webAPI` takes no form context of its own, and the
+  parent is the one value the platform hands the control. A **dropdown** does
+  honour a fixed condition — it lists a view, filter and all — and a view with
+  the filter built in, set on the column, narrows what **Browse** shows.
 
 - **Browse is hidden while a parent filters the search.** The framework's
   `lookupObjects` — unlike the Client API's version of the same call — has no
@@ -53,8 +54,25 @@ order: 7
   appears under the field.
 
 - **No recently-used list.** The platform lookup offers most-recently-used
-  records before you type. This control has nothing to show until a search
-  returns, and the framework exposes no MRU list to read.
+  records before you type. In search mode this control has nothing to show
+  until a search returns, and the framework exposes no MRU list to read. A
+  dropdown shows its whole list instead, which is the better answer for a
+  short one.
 
-- **The demo on this page cannot search.** Nothing behind it can answer a
-  Dataverse query. See the demo's own limitations, listed beside it.
+- **A dropdown lists at most 500 rows**, and 100 unless *Dropdown rows* says
+  otherwise. A view with more ends the list with a line saying how many are
+  shown, and typing narrows only those — it does not search the rest. A table
+  that large is what search mode is for.
+
+- **A dropdown is read once per form load**, when it is first opened, and
+  again only when the parent it is filtered by changes. A record added while
+  the form is open appears after the form is reloaded.
+
+- **A dropdown lists a view, never the bare table.** When neither the
+  column's view nor the table's default lookup view can be read, the field says
+  so and searches as you type instead. Listing the table would offer every
+  record a view exists to keep out — retired values first among them.
+
+- **The demo on this page cannot search, nor show a dropdown.** Nothing behind
+  it can answer a Dataverse query or a view's FetchXML. See the demo's own
+  limitations, listed beside it.

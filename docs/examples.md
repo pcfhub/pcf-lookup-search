@@ -89,3 +89,28 @@ column is locked, or field-level security denies write access, the control
 renders the current record with no search box and no buttons. A user with no
 *read* access sees a message saying so rather than an empty field, which would
 read as "no record selected".
+
+## Choosing a country from a reference table
+
+A custom *Country* table, a lookup to it on the account, and a list of a
+couple of hundred values a user should pick from rather than search for. Some
+countries are no longer offered, and removing them must not break the records
+that already point at them.
+
+| Property | Value |
+| --- | --- |
+| Display as | Dropdown |
+| Dropdown rows | 300 |
+| Secondary column | `cll_isocode` |
+| Allow browse | No |
+
+Opening the field lists the countries in the order of the table's lookup view
+— by name, unless the view says otherwise — each with its ISO code on a second
+line; typing `land` narrows it to Finland, Iceland, Poland. To **retire** a
+country, deactivate the record: the lookup view lists active records only, so
+it leaves the dropdown, while an account that already points at it keeps the
+value and still shows it.
+
+To list something other than the lookup view, set a view on the column in the
+form designer — a *Countries in the EU* view lists just those, in its own
+order.

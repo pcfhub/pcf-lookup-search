@@ -33,6 +33,11 @@ and writing the chosen record straight back to the column.
   the cascading lookup that otherwise takes an `addPreSearch` script. It finds
   the linking column from the table's relationships, and asks rather than
   guesses when there are two.
+- **It can be a dropdown instead.** Set *Display as* to *Dropdown* and the
+  field lists a view's rows when opened — countries, categories, anything a
+  user picks from rather than looks up — in the view's order, narrowed as they
+  type. The view decides what is listed, so a value you deactivate leaves the
+  list: the lookup view's own *active records only* does it.
 - **It does not replace the platform panel, it keeps it.** The Browse button
   opens the environment's own lookup dialog, on the view the maker configured
   for the column. When the search box cannot find something, the way out is one

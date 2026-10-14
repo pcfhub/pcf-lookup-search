@@ -4,10 +4,10 @@
     "slug": "pcf-lookup-search",
     "name": "Lookup Search",
     "tagline": "A lookup column as a type-ahead search over the target table.",
-    "summary": "Replaces a lookup column with a type-ahead search over the target table, and writes the chosen record straight to the column.\n\n- Matches extra columns you name, such as an email address or a reference number, not only the record's name\n- Shows a second line under each result, to tell similar records apart\n- Can follow another lookup on the form, such as offering only the selected account's contacts\n- A Browse button still opens the platform's own lookup dialog\n\nModel-driven apps only.",
+    "summary": "Replaces a lookup column with a type-ahead search over the target table, and writes the chosen record straight to the column.\n\n- Matches extra columns you name, such as an email address or a reference number, not only the record's name\n- Shows a second line under each result, to tell similar records apart\n- Can follow another lookup on the form, such as offering only the selected account's contacts\n- Can show as a dropdown instead: a view's rows listed on open, in the view's order, so a deactivated value leaves the list\n- A Browse button still opens the platform's own lookup dialog\n\nModel-driven apps only.",
     "category": "pickers",
     "hosts": ["model-driven"],
-    "tags": ["react", "lookup", "search", "type-ahead", "dataverse", "accessible"],
+    "tags": ["react", "lookup", "search", "type-ahead", "dropdown", "dataverse", "accessible"],
     "supportLevel": "reference",
     "builtWith": "ai",
 
@@ -46,7 +46,8 @@
             "Browse opens the demo’s own lookup dialog, a searchable list of the contact table. The platform’s dialog also offers views and columns, which the demo’s does not.",
             "The parent is set by the preset, not by another field. On a form, Filter by follows a lookup the user changes; here, switching between the Filtered and Two linking columns presets is the way to change it, and On parent change: Clear it acts on that switch.",
             "The Linking column warning for a form that sets Linking column without mapping Filter by cannot be shown. The demo builds every lookup property as mapped, so the control never sees an unmapped one.",
-            "A refused search, such as a user without read access to contacts, cannot be shown. The demo’s Dataverse can refuse a write, and this control never writes — the form saves the lookup it hands back — so its one request is the search, a read, and reads are always answered. On a form the refusal’s sentence appears under the field. Opening the selected record reports the call and navigates nowhere."
+            "A refused search, such as a user without read access to contacts, cannot be shown. The demo’s Dataverse can refuse a write, and this control never writes — the form saves the lookup it hands back — so its one request is the search, a read, and reads are always answered. On a form the refusal’s sentence appears under the field. Opening the selected record reports the call and navigates nowhere.",
+            "Display as: Dropdown cannot be shown. A dropdown lists the rows of a view, which means reading the view and sending its FetchXML, and the demo’s Dataverse answers neither, so every preset here is the search. On a form the field opens on the view’s rows, in its order."
         ],
         "presets": [
             {
